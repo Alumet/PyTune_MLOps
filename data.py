@@ -57,9 +57,10 @@ def track_score(df: pd.DataFrame) -> pd.DataFrame:
 
 def train_test_split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-
-    :param df:
-    :return:
+    Cut dataset in sub train and test dataset.
+    Test dataset equals last 2 days and train dataset equals to eventing older than 2 days
+    :param df: DataFrame with listening events
+    :return: df_train, df_test
     """
     df['time_stamp'] = pd.to_datetime(df['time_stamp'])
     date = df['time_stamp'].max() - datetime.timedelta(days=2)
