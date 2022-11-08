@@ -3,10 +3,9 @@ import datetime
 import os
 from typing import Tuple
 import numpy as np
-from scipy.sparse import coo_matrix
 
 
-def load_data() -> Tuple[coo_matrix, pd.DataFrame]:
+def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Load data from dataset, score tracks and return coo_matrix for model training
     :return:
@@ -14,8 +13,7 @@ def load_data() -> Tuple[coo_matrix, pd.DataFrame]:
     df = load_df()
     df = track_score(df)
     df_train, df_test = train_test_split(df)
-    train = df_to_vect(df_train)
-    return train, df_test
+    return df_train, df_test
 
 
 def load_df(date: datetime.date = datetime.datetime.now()) -> pd.DataFrame:
@@ -70,20 +68,4 @@ def train_test_split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     return df_train, df_test
 
-
-def df_to_vect(df: pd.DataFrame) -> coo_matrix:
-    """
-    Create sparce matrix for model with
-    :param df: DataFrame af dataset
-    :return: COO Matrix (weight, (item, user)
-    """
-
-    df_gb = df.groupby(['user_id', 'track_id']).mean(numeric_only=True).reset_index()
-
-    item = np.array(df_gb[['track_id']].values).T[0]
-    user = np.array(df_gb[['user_id']].values).T[0]
-    weight = np.array(df_gb[['rating']].values).T[0]
-
-    mat_music = coo_matrix((weight, (item, user)))
-    return mat_music
 
