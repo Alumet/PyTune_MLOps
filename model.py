@@ -10,25 +10,26 @@ import pickle
 
 class als_model:
     """
-
+    Als model based on implicit module
+    Class model wrapper
     """
+
     def __init__(self, factors: int = 40, iterations: int = 30):
-        self.track_dict = None
-        self.data_test = None
-        self.data_train = None
-        self.model_music = None
-        self.factors = factors
-        self.iterations = iterations
+        self.track_dict = None  # dict to recover track info from id
+        self.data_test = None  # test_data DataFrame
+        self.data_train = None  # train_data csr_matrix
+        self.model_music = None  # als_implicit model
+        self.factors = factors  # number of factors for model matrix
+        self.iterations = iterations  # number of training iteration
 
     def train(self, train: pd.DataFrame, test: pd.DataFrame) -> None:
         """
-
-        :param train:
-        :param test:
-        :return:
+        Train model
+        :param train: DataFrame train dataset
+        :param test: DataFrame test datatset
         """
-        self.data_train = self._df_to_vect(train)
-        self.track_dict = train
+        self.data_train = self._df_to_vect(train)  # create csr matrix
+        self.track_dict = train  # todo create dict
         self.data_test = test
 
         self.model_music = implicit.als.AlternatingLeastSquares(factors=self.factors,
@@ -37,21 +38,19 @@ class als_model:
                                                                 )
         self.model_music.fit(self.data_train)
 
-    def save(self, path: str = 'model/'):
+    def save(self, path: str = 'model/') -> None:
         """
-
-        :param path:
-        :return:
+        Save model in binary dump file in .mld format
+        :param path: path to model folder
         """
         if self.model_music:
             with open(path + 'model_als.mdl', 'wb') as file:
                 pickle.dump((self.model_music, self.data_train, self.data_test), file)
 
-    def load(self, file_path: str = 'model/model_als.mdl'):
+    def load(self, file_path: str = 'model/model_als.mdl') -> None:
         """
-
-        :param file_path:
-        :return:
+        load model from .mld file
+        :param file_path: path to model file
         """
         with open(file_path, 'rb') as file:
             self.model_music, self.data_train, self.data_test = pickle.load(file)

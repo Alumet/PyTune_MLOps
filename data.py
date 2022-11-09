@@ -2,7 +2,6 @@ import pandas as pd
 import datetime
 import os
 from typing import Tuple
-import numpy as np
 
 
 def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
