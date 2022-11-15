@@ -15,6 +15,9 @@ model.save()"""
 model = als_model()
 model.load()
 
-#model._auc()
-print(model.score()['p@k']['train_mean'], model.score()['p@k']['test_mean'])
+# model._auc()
+# print(model.score()['p@k']['train_mean'], model.score()['p@k']['test_mean'])
 
+reco = model.recommend(user_id=1004)
+a = model.track_list[model.track_list['track_id'].apply(lambda x: x in set(reco[0]))]
+print(a)

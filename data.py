@@ -23,6 +23,17 @@ def load_df(date: datetime.date = datetime.datetime.now()) -> pd.DataFrame:
     """
 
     df = pd.read_csv(os.getenv('DATA_FILE'), index_col=0)
+
+    # todo refactor fake user and redo df
+    folder = os.getenv('FAKE_USER_folder')
+    files = os.listdir(folder)
+
+    for file in files:
+        print(file)
+        df_temp = pd.read_csv(f'{folder}{file}', index_col=0)
+        df_temp['time_stamp'] = '2022-01-27 21:43:14'
+        df = pd.concat([df, df_temp])
+
     df.dropna(inplace=True)
     df['time_stamp'] = pd.to_datetime(df['time_stamp'])
     df = df[df['time_stamp'] < date]
