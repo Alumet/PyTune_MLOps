@@ -4,7 +4,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 import numpy as np
 import pickle
 from typing import Tuple, List
-from metric import k_best
+from metric import k_best, auc_score
 
 
 class als_model:
@@ -36,6 +36,9 @@ class als_model:
 
         self.model_music = implicit.als.AlternatingLeastSquares(factors=self.factors,
                                                                 iterations=self.iterations,
+                                                                use_native=True,
+                                                                use_cg=True,
+                                                                calculate_training_loss=True,
                                                                 num_threads=-1
                                                                 )
         self.model_music.fit(self.user_items.tocsr())
@@ -45,30 +48,18 @@ class als_model:
         Calculate score p@k50 et AUC
         :return: dict of p@k and auc scores
         """
+        # todo add error if model is not trained
         result = {}
-        train_scores = list()
-        test_scores = list()
 
-        for user in range(self.user_items.shape[0] - 1):
-            user_tracks_train = set(
-                [x for x in self.data_train[self.data_train['user_id'] == user + 1]['track_id'].unique()])
-            user_tracks_test = set(
-                [x for x in self.data_test[self.data_test['user_id'] == user + 1]['track_id'].unique()])
-
-            if len(user_tracks_test) != 0:
-                recommended_tracks = self.recommend(user_id=user + 1, nb_tracks=50)[0]
-
-                k = k_best(user_tracks_train, recommended_tracks)
-                train_scores.append(k.NDCG())
-
-                k = k_best(user_tracks_test, recommended_tracks)
-                test_scores.append(k.NDCG())
-
+        # P@K
+        train_scores, test_scores = self._p_at_k()
         result['p@k'] = {'train_mean': np.array(train_scores).mean(),
                          'train': np.array(train_scores),
                          'test_mean': np.array(test_scores).mean(),
                          'test': np.array(test_scores)
                          }
+
+        # AUC
 
         return result
 
@@ -79,11 +70,20 @@ class als_model:
         :param nb_tracks: number of recommendations
         :return:
         """
+
         recommendation = self.model_music.recommend(userid=user_id,
-                                                    user_items=self.user_items.tocsr()[user_id],
+                                                    user_items=self.user_items[user_id],
                                                     filter_already_liked_items=False,
                                                     N=nb_tracks)
         return recommendation
+
+    def rank_item(self, user_id: int, item_list: list):
+        ranks = self.model_music.recommend(userid=user_id,
+                                           user_items=self.user_items[user_id],
+                                           filter_already_liked_items=False,
+                                           items=item_list,
+                                           N=len(item_list))
+        return ranks
 
     def save(self, path: str = 'model/') -> None:
         """
@@ -107,7 +107,7 @@ class als_model:
             self.model_music, self.user_items, self.data_test, self.data_train, self.track_list = pickle.load(file)
 
     @staticmethod
-    def _df_to_vect(df: pd.DataFrame) -> coo_matrix:
+    def _df_to_vect(df: pd.DataFrame) -> csr_matrix:
         """
         Create sparce matrix for model with
         :param df: DataFrame af dataset
@@ -121,7 +121,7 @@ class als_model:
         weight = np.array(df_gb[['rating']].values).T[0]
 
         mat_music = coo_matrix((weight, (item, user)))
-        return mat_music.T
+        return mat_music.T.tocsr()
 
     @staticmethod
     def _track_df(df_train: pd.DataFrame, df_test: pd.DataFrame) -> pd.DataFrame:
@@ -145,3 +145,53 @@ class als_model:
         df = df_test.groupby(['user_id', 'track_id']).size().reset_index(name='nb_event')
         df = df[['user_id', 'track_id', 'nb_event']]
         return df
+
+    def _p_at_k(self) -> Tuple[list, list]:
+
+        train_scores = list()
+        test_scores = list()
+
+        for user in range(self.user_items.shape[0] - 1):
+            user_tracks_train = set(
+                [x for x in self.data_train[self.data_train['user_id'] == user + 1]['track_id'].unique()])
+            user_tracks_test = set(
+                [x for x in self.data_test[self.data_test['user_id'] == user + 1]['track_id'].unique()])
+
+            if len(user_tracks_test) != 0:
+                recommended_tracks = self.recommend(user_id=user + 1, nb_tracks=50)[0]
+
+                k = k_best(user_tracks_train, recommended_tracks)
+                train_scores.append(k.NDCG())
+
+                k = k_best(user_tracks_test, recommended_tracks)
+                test_scores.append(k.NDCG())
+
+        return train_scores, test_scores
+
+    def _auc(self) -> Tuple[list, list]:
+
+        train_scores = list()
+        test_scores = list()
+
+        train_track_list = self.data_train['track_id'].unique()
+        test_track_list = self.data_test['track_id'].unique()
+
+        for user in range(self.user_items.shape[0] - 1):
+            user_tracks_train = set(
+                [x for x in self.data_train[self.data_train['user_id'] == user + 1]['track_id'].unique()])
+            user_tracks_test = set(
+                [x for x in self.data_test[self.data_test['user_id'] == user + 1]['track_id'].unique()])
+
+            ranks = self.rank_item(user_id=user, item_list=train_track_list)
+            y_true = [1 if x in user_tracks_train else 0 for x in ranks[0]]
+            _, auc_train = auc_score(y_true=y_true, ratings=ranks[1])
+            train_scores.append(auc_train)
+
+            ranks = self.rank_item(user_id=user, item_list=test_track_list)
+            y_true = [1 if x in user_tracks_test else 0 for x in ranks[0]]
+            _, auc_train = auc_score(y_true=y_true, ratings=ranks[1])
+            test_scores.append(auc_train)
+
+        for i, s in enumerate(_):
+            print(round(s, 4), np.mean([x[i] for x in train_scores]), np.mean([x[i] for x in test_scores]))
+        # todo refacto

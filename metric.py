@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
+from typing import List, Tuple
 
 
 class k_best:
@@ -50,48 +51,25 @@ class k_best:
         return result
 
 
-def auc_score(df_train, df_test, model, mat, seuils=[0]):
-    ids = df_train['user_id'].unique()
+def auc_score(y_true: List[int], ratings: List[float], thresholds: np.array = np.linspace(-0.25, 1, 26)) \
+        -> Tuple[np.array, np.array]:
+    """
 
-    auc_train_all = dict()
-    auc_test_all = dict()
+    :param thresholds:
+    :param ratings:
+    :param y_true:
+    :return:
+    """
 
-    item = []  # todo replace
+    roc_auc = list()
 
-    for user in ids:
-        a = model.rank_items(user, mat.tocsr().T, list(set(item)))
+    for threshold in thresholds:
+        y_pred = [1 if x > threshold else 0 for x in ratings]
+        try:
+            score = roc_auc_score(y_true, y_pred)
+            roc_auc.append(score)
+        except:
+            roc_auc.append(0.5)
 
-        id = [x[0] for x in a]
-        score = [x[1] for x in a]
+    return thresholds, np.array(roc_auc)
 
-        df_temp = pd.DataFrame({'id': id, 'score': score})
-
-        user_tracks_train = set([x for x in df_train[df_train['user_id'] == user]['track_id'].unique()])
-        user_tracks_test = set([x for x in df_test[df_test['user_id'] == user]['track_id'].unique()])
-
-        df_temp['train'] = df_temp['id'].apply(lambda x: 1 if x in user_tracks_train else 0)
-        df_temp['test'] = df_temp['id'].apply(lambda x: 1 if x in user_tracks_test else 0)
-
-        y_true_test = df_temp['test']
-        y_true_train = df_temp['train']
-
-        for s in seuils:
-
-            try:
-
-                y_pred = [1 if x > s else 0 for x in df_temp['score']]
-
-                auc_test = roc_auc_score(y_true_test, y_pred)
-                auc_train = roc_auc_score(y_true_train, y_pred)
-
-                try:
-                    auc_train_all[s].append(auc_train)
-                    auc_test_all[s].append(auc_test)
-                except:
-                    auc_train_all[s] = [auc_train]
-                    auc_test_all[s] = [auc_test]
-
-            except:
-                pass
-
-    return auc_train_all, auc_test_all
