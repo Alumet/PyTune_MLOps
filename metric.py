@@ -4,14 +4,14 @@ from sklearn.metrics import roc_auc_score
 
 
 class k_best:
-    def __init__(self, user_tracks, recommended_tracks):
+    def __init__(self, user_tracks: set, recommended_tracks: list):
         self.user_tracks = user_tracks
         self.recommended_tracks = recommended_tracks
 
-    def CG(self):
+    def CG(self) -> int:
         return len(set(self.recommended_tracks).intersection(set(self.user_tracks)))
 
-    def DCG(self):
+    def DCG(self) -> float:
         result = 0
         for i, id in enumerate(self.recommended_tracks):
 
@@ -20,7 +20,7 @@ class k_best:
 
         return result
 
-    def IDCG(self):
+    def IDCG(self) -> float:
         a = self.CG()
         result = 0
 
@@ -29,7 +29,7 @@ class k_best:
 
         return result
 
-    def NDCG(self):
+    def NDCG(self) -> float:
         if self.IDCG() != 0:
             result = self.DCG() / self.IDCG()
         else:
@@ -37,10 +37,10 @@ class k_best:
 
         return result
 
-    def P_at_k(self):
+    def P_at_k(self) -> float:
         return self.CG() / len(self.recommended_tracks)
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = 'K_best ressults: \n'
         result += f'CG = {self.CG()}\n'
         result += f'DCG = {self.DCG()}\n'

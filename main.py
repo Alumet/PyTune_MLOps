@@ -4,15 +4,15 @@ import data
 
 dotenv.load_dotenv()
 
-'''model = als_model(factors=10, iterations=5)
+"""model = als_model(factors=150, iterations=1)
 
 train, test = data.load_data()
 model.train(train, test)
-model.save()'''
+model.save()
+"""
 
 model = als_model()
 model.load()
-reco = model.recommend(user_id=666)
-print(model.track_list[model.track_list['track_id'].apply(lambda x: x in set(reco[0]))])
+print(model.score()['p@k']['train_mean'], model.score()['p@k']['test_mean'])
 
 
