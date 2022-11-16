@@ -5,6 +5,7 @@ from scipy.sparse import csr_matrix
 import pickle
 from typing import Tuple, List
 import os
+import erros
 
 
 class als_model:
@@ -46,15 +47,16 @@ class als_model:
         Calculate score p@k50 et AUC
         :return: dict of p@k and auc scores
         """
-        # todo add error if model is not trained
+        if self.model_music is None:
+            raise erros.ModelNotTrained
 
-        result = ranking_metrics_at_k(self.model_music,
-                                      self.user_items,
-                                      self.data_test,
-                                      50,
-                                      show_progress=False
-                                      )
-
+        metrics = ranking_metrics_at_k(self.model_music,
+                                       self.user_items,
+                                       self.data_test,
+                                       50,
+                                       show_progress=False
+                                       )
+        result = {50: metrics}
         return result
 
     def recommend(self, user_id: int, nb_tracks: int = 10) -> Tuple[List[int], List[float]]:
@@ -64,6 +66,8 @@ class als_model:
         :param nb_tracks: number of recommendations
         :return:
         """
+        if self.model_music is None:
+            raise erros.ModelNotTrained
 
         recommendation = self.model_music.recommend(userid=user_id,
                                                     user_items=self.user_items[user_id],
@@ -93,6 +97,8 @@ class als_model:
                              self.user_items,
                              self.data_test,
                              self.track_list), file)
+        else:
+            raise erros.ModelNotTrained
 
     def load(self, file_path: str = None) -> None:
         """
@@ -105,4 +111,4 @@ class als_model:
         with open(file_path, 'rb') as file:
             self.model_music, self.user_items, self.data_test, self.track_list = pickle.load(file)
 
-
+        # todo test if elements are valid
