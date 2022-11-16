@@ -1,10 +1,10 @@
 import pandas as pd
 import implicit
-from scipy.sparse import coo_matrix, csr_matrix
-import numpy as np
+from implicit.evaluation import ranking_metrics_at_k
+from scipy.sparse import csr_matrix
 import pickle
 from typing import Tuple, List
-from metric import k_best, auc_score
+import os
 
 
 class als_model:
@@ -13,7 +13,7 @@ class als_model:
     Class model wrapper
     """
 
-    def __init__(self, factors: int = 150, iterations: int = 1):
+    def __init__(self, factors: int = 200, iterations: int = 30, alpha: float = 0.5):
         self.track_list = None  # dict to recover track info from id
         self.data_test = None  # test_data DataFrame
         self.data_train = None  # train_data DataFrame
@@ -21,23 +21,21 @@ class als_model:
         self.model_music = None  # als_implicit model
         self.factors = factors  # number of factors for model matrix
         self.iterations = iterations  # number of training iteration
+        self.alpha = alpha
 
-    def train(self, train: pd.DataFrame, test: pd.DataFrame) -> None:
+    def train(self, train: csr_matrix, test: csr_matrix) -> None:
         """
         Train model
         :param train: DataFrame train dataset
         :param test: DataFrame test datatset
         """
-        self.user_items = self._df_to_vect(train)  # create csr matrix
-
-        self.track_list = self._track_df(train, test)
-        self.data_test = self._user_track_df(test)
-        self.data_train = self._user_track_df(train)
+        self.user_items = train
+        self.data_test = test
 
         self.model_music = implicit.als.AlternatingLeastSquares(factors=self.factors,
                                                                 iterations=self.iterations,
+                                                                alpha=self.alpha,
                                                                 use_native=True,
-                                                                use_cg=True,
                                                                 calculate_training_loss=True,
                                                                 num_threads=-1
                                                                 )
@@ -49,17 +47,13 @@ class als_model:
         :return: dict of p@k and auc scores
         """
         # todo add error if model is not trained
-        result = {}
 
-        # P@K
-        train_scores, test_scores = self._p_at_k()
-        result['p@k'] = {'train_mean': np.array(train_scores).mean(),
-                         'train': np.array(train_scores),
-                         'test_mean': np.array(test_scores).mean(),
-                         'test': np.array(test_scores)
-                         }
-
-        # AUC
+        result = ranking_metrics_at_k(self.model_music,
+                                      self.user_items,
+                                      self.data_test,
+                                      50,
+                                      show_progress=False
+                                      )
 
         return result
 
@@ -85,113 +79,30 @@ class als_model:
                                            N=len(item_list))
         return ranks
 
-    def save(self, path: str = 'model/') -> None:
+    def save(self, path: str = None) -> None:
         """
         Save model in binary dump file in .mld format
         :param path: path to model folder
         """
+        if not path:
+            path = os.getenv('MODEL_FOLDER')
+
         if self.model_music:
             with open(path + 'model_als.mdl', 'wb') as file:
                 pickle.dump((self.model_music,
                              self.user_items,
                              self.data_test,
-                             self.data_train,
                              self.track_list), file)
 
-    def load(self, file_path: str = 'model/model_als.mdl') -> None:
+    def load(self, file_path: str = None) -> None:
         """
         load model from .mld file
         :param file_path: path to model file
         """
+        if not file_path:
+            file_path = os.getenv('PRODUCTION_MODEL')
+
         with open(file_path, 'rb') as file:
-            self.model_music, self.user_items, self.data_test, self.data_train, self.track_list = pickle.load(file)
+            self.model_music, self.user_items, self.data_test, self.track_list = pickle.load(file)
 
-    @staticmethod
-    def _df_to_vect(df: pd.DataFrame) -> csr_matrix:
-        """
-        Create sparce matrix for model with
-        :param df: DataFrame af dataset
-        :return: COO Matrix (weight, (item, user)
-        """
 
-        df_gb = df.groupby(['user_id', 'track_id']).mean(numeric_only=True).reset_index()
-
-        item = np.array(df_gb[['track_id']].values).T[0]
-        user = np.array(df_gb[['user_id']].values).T[0]
-        weight = np.array(df_gb[['rating']].values).T[0]
-
-        mat_music = coo_matrix((weight, (item, user)))
-        return mat_music.T.tocsr()
-
-    @staticmethod
-    def _track_df(df_train: pd.DataFrame, df_test: pd.DataFrame) -> pd.DataFrame:
-        """
-        Create a df with all track info
-        :param df_train: df training data
-        :param df_test: df test data
-        :return: df with [track_id, artist_id, track_name, artist_name]
-        """
-        df = pd.concat([df_train, df_test])
-        df = df.groupby('track_id').first().reset_index()
-        return df.drop(columns=['user_id', 'time_stamp', 'rating'])
-
-    @staticmethod
-    def _user_track_df(df_test: pd.DataFrame) -> pd.DataFrame:
-        """
-        Reduce test data to user_id vs track_id
-        :param df_test: df test_data
-        :return: df with [user_id, track_id, nb_event]
-        """
-        df = df_test.groupby(['user_id', 'track_id']).size().reset_index(name='nb_event')
-        df = df[['user_id', 'track_id', 'nb_event']]
-        return df
-
-    def _p_at_k(self) -> Tuple[list, list]:
-
-        train_scores = list()
-        test_scores = list()
-
-        for user in range(self.user_items.shape[0] - 1):
-            user_tracks_train = set(
-                [x for x in self.data_train[self.data_train['user_id'] == user + 1]['track_id'].unique()])
-            user_tracks_test = set(
-                [x for x in self.data_test[self.data_test['user_id'] == user + 1]['track_id'].unique()])
-
-            if len(user_tracks_test) != 0:
-                recommended_tracks = self.recommend(user_id=user + 1, nb_tracks=50)[0]
-
-                k = k_best(user_tracks_train, recommended_tracks)
-                train_scores.append(k.NDCG())
-
-                k = k_best(user_tracks_test, recommended_tracks)
-                test_scores.append(k.NDCG())
-
-        return train_scores, test_scores
-
-    def _auc(self) -> Tuple[list, list]:
-
-        train_scores = list()
-        test_scores = list()
-
-        train_track_list = self.data_train['track_id'].unique()
-        test_track_list = self.data_test['track_id'].unique()
-
-        for user in range(self.user_items.shape[0] - 1):
-            user_tracks_train = set(
-                [x for x in self.data_train[self.data_train['user_id'] == user + 1]['track_id'].unique()])
-            user_tracks_test = set(
-                [x for x in self.data_test[self.data_test['user_id'] == user + 1]['track_id'].unique()])
-
-            ranks = self.rank_item(user_id=user, item_list=train_track_list)
-            y_true = [1 if x in user_tracks_train else 0 for x in ranks[0]]
-            _, auc_train = auc_score(y_true=y_true, ratings=ranks[1])
-            train_scores.append(auc_train)
-
-            ranks = self.rank_item(user_id=user, item_list=test_track_list)
-            y_true = [1 if x in user_tracks_test else 0 for x in ranks[0]]
-            _, auc_train = auc_score(y_true=y_true, ratings=ranks[1])
-            test_scores.append(auc_train)
-
-        for i, s in enumerate(_):
-            print(round(s, 4), np.mean([x[i] for x in train_scores]), np.mean([x[i] for x in test_scores]))
-        # todo refacto
