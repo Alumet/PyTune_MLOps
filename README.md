@@ -70,3 +70,21 @@ curl -X GET -i http://127.0.0.1:8000/
 
 ### Documentation
 Open in browser:  http://127.0.0.1:8000/docs
+
+### API DEFAULT USERS
+
+**admin user**
+```json
+{
+  "username": "admin",
+  "password": "admin"
+}
+```
+
+**test user**
+```json
+{
+  "username": "test",
+  "password": "test"
+}
+```

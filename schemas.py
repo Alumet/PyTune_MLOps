@@ -8,8 +8,7 @@ class RecommendationRequest(BaseModel):
     filter_already_liked: bool = False
 
 
-class RecommendationResult(BaseModel):
-    track_id: int
-    score: float
-    track_name: str
-    artist_name: str
+class User(BaseModel):
+    user_name: str
+    pass_word: str
+    is_admin: bool = False
