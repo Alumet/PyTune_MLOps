@@ -7,7 +7,7 @@ from schemas import RecommendationRequest, RecommendationResult
 
 dotenv.load_dotenv()
 
-api = FastAPI(title="Pytune music recommender API",
+app = FastAPI(title="Pytune music recommender API",
               description="Get music recommendation from Pytune implicit collaborative filtering model",
               version="1.0.0",
               openapi_tags=[{'name': 'home',
@@ -35,7 +35,7 @@ model = als_model()
 model.load()
 
 
-@api.get('/', name='Api test', tags=['home'])
+@app.get('/', name='Api test', tags=['home'])
 async def get_index() -> dict:
     """
     Route to test if api is running\n
@@ -44,7 +44,7 @@ async def get_index() -> dict:
     return {'Api status': 'running'}
 
 
-@api.post('/recommendation', name='music recommendations', tags=['recommendation'])
+@app.post('/recommendation', name='music recommendations', tags=['recommendation'])
 async def post_recommendations(request: RecommendationRequest):
     """
     Rerun N track id to listen to
@@ -60,7 +60,7 @@ async def post_recommendations(request: RecommendationRequest):
     return {'Recommendations': result}
 
 
-@api.get('/model/reload', name='reload model', tags=['admin'])
+@app.get('/model/reload', name='reload model', tags=['admin'])
 async def get_reload_model():
     """
     Reload model
@@ -71,7 +71,7 @@ async def get_reload_model():
     return {'status': 'model reloaded'}
 
 
-@api.get('/model/train', name='train model', tags=['admin'])
+@app.get('/model/train', name='train model', tags=['admin'])
 async def get_train_model():
     """
     Reload model

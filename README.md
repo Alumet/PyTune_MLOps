@@ -59,7 +59,7 @@ python3 train.py
 
 ! Place yourself in folder containing main.py !
 ```
-uvicorn main:api
+uvicorn api:app
 ```
 
 ### Test API
