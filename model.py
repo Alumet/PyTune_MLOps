@@ -59,9 +59,10 @@ class als_model:
         result = {50: metrics}
         return result
 
-    def recommend(self, user_id: int, nb_tracks: int = 10) -> Tuple[List[int], List[float]]:
+    def recommend(self, user_id: int, nb_tracks: int = 10, filter: bool = False) -> Tuple[List[int], List[float]]:
         """
         Recommend n tracks for user id
+        :param filter: filter already liked titles
         :param user_id: int user id
         :param nb_tracks: number of recommendations
         :return:
@@ -71,7 +72,7 @@ class als_model:
 
         recommendation = self.model_music.recommend(userid=user_id,
                                                     user_items=self.user_items[user_id],
-                                                    filter_already_liked_items=False,
+                                                    filter_already_liked_items=filter,
                                                     N=nb_tracks)
         return recommendation
 
