@@ -5,10 +5,12 @@ import data
 
 def train_model():
     model = als_model()
-    df_track, (train, test) = data.load_data()
+    train, test = data.load_data()
     model.train(train, test)
-    model.track_list = df_track
-    print(model.score())
+    score = model.score()
+    print(score)
+    db = data.DataBase.instance()
+    db.save_score(score)
     model.save()
 
 

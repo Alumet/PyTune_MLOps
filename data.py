@@ -2,56 +2,108 @@ import numpy as np
 import pandas as pd
 import datetime
 import os
-from typing import Tuple
+from typing import Tuple, List
 from scipy.sparse import coo_matrix, csr_matrix
 from implicit.nearest_neighbours import bm25_weight
 from implicit import evaluation
 
+import sqlite3
+import sqlalchemy
+from utils import Singleton
 
-def load_data() -> Tuple[pd.DataFrame, Tuple[csr_matrix, csr_matrix]]:
+
+@Singleton
+class DataBase:
+    def __init__(self):
+        url = f'sqlite:///{os.getenv("DATA_BASE")}'
+        self.engine = sqlalchemy.create_engine(url)
+
+    def _request(self, request: str) -> list:
+        with self.engine.connect() as connection:
+            result = connection.execute(f"{request}")
+            return result.fetchall()
+
+    def _insert(self, request, values) -> None:
+        with self.engine.connect() as connection:
+            with connection.begin() as transaction:
+                try:
+                    ins = f"{request} VALUES ({','.join(['?' for i in values[0]])})"
+                    connection.execute(ins, values)
+                except Exception as e:
+                    print(e)
+                    transaction.rollback()
+                else:
+                    transaction.commit()
+
+    def get_user_item(self, date: datetime.date = datetime.datetime.now()):
+        request = f'select user_id, track_id from user_item where time_stamp <= "{date}"'
+        ans = self._request(request)
+
+        df = pd.DataFrame({'user_id': [x[0] for x in ans],
+                           'track_id': [x[1] for x in ans]})
+
+        df_track = df.groupby(['user_id', 'track_id']).size().reset_index(name='listening_count')
+
+        return df_track
+
+    def get_track_info(self, track_list: List[int]) -> pd.DataFrame:
+        request = f'select * from track where id in {tuple(track_list)}'
+        ans = self._request(request)
+
+        df = pd.DataFrame({"track_id": [x[0] for x in ans],
+                           "track_name": [x[1] for x in ans],
+                           "artist_id": [x[2] for x in ans],
+                           "artist_name": [x[3] for x in ans]
+                           })
+        return df
+
+    def get_user_info(self, user_name: str) -> dict:
+        request = f"select * from user where name = '{user_name}' limit 1"
+        ans = self._request(request)[0]
+
+        user = {'id': ans[0],
+                'username': ans[1],
+                'admin': ans[2] == 1,
+                'hashed_password': ans[3],
+                }
+        return user
+
+    def save_prediction(self, user_id: int, recommendation: list) -> None:
+        date = datetime.datetime.now()
+        values = []
+        track_list, score_list = recommendation
+        for rank, (track, score) in enumerate(zip(track_list, score_list)):
+            values.append((user_id, int(track), float(score), rank+1, date))
+
+        self._insert('INSERT OR REPLACE INTO prediction', values)
+
+    def save_score(self, score: dict) -> None:
+        date = datetime.datetime.now()
+        values = []
+        for key in score.keys():
+            s = score[key]
+            values.append((date, key, s['precision'], s['map'], s['ndcg'], s['auc']))
+
+        self._insert('INSERT OR REPLACE INTO training', values)
+
+    def add_event(self) -> None:
+        # todo
+        pass
+
+    def add_user(self) -> None:
+        # todo
+        pass
+
+
+def load_data() -> Tuple[csr_matrix, csr_matrix]:
     """
     Load data from dataset, score tracks and return coo_matrix for model training
     :return:
     """
-    df = load_df()
-    df_track = track_df(df)
-    df = track_score(df)
+    db = DataBase.instance()
+    df = db.get_user_item()
     mat_train, mat_test = train_test_split(df)
-    return df_track, (mat_train, mat_test)
-
-
-def load_df(date: datetime.date = datetime.datetime.now()) -> pd.DataFrame:
-    """
-    load dataset.csv file and filter by date
-    :param date: latest date allowed
-    :return: filtered df
-    """
-
-    df = pd.read_csv(os.getenv('DATA_FILE'), index_col=0)
-
-    # todo refactor fake user and redo df
-    folder = os.getenv('FAKE_USER_FOLDER')
-    files = os.listdir(folder)
-
-    for file in files:
-        df_temp = pd.read_csv(f'{folder}{file}', index_col=0)
-        df_temp['time_stamp'] = '2022-01-27 21:43:14'
-        df = pd.concat([df, df_temp])
-
-    df.dropna(inplace=True)
-    df['time_stamp'] = pd.to_datetime(df['time_stamp'])
-    df = df[df['time_stamp'] < date]
-    return df
-
-
-def track_score(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Calculate track score based on user listening history
-    :param df: DataFrame with all listening event
-    :return: DataFrame
-    """
-    df_track = df.groupby(['user_id', 'track_id']).size().reset_index(name='listening_count')
-    return df_track
+    return mat_train, mat_test
 
 
 def train_test_split(df: pd.DataFrame, train_size: float = 0.8) -> Tuple[csr_matrix, csr_matrix]:
@@ -74,14 +126,3 @@ def train_test_split(df: pd.DataFrame, train_size: float = 0.8) -> Tuple[csr_mat
     train, test = evaluation.train_test_split(mat, train_percentage=train_size)
 
     return train, test
-
-
-def track_df(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Create a df with all track info
-    :param df: df training data
-    :return: df with [track_id, artist_id, track_name, artist_name]
-    """
-
-    df = df.groupby('track_id').first().reset_index()
-    return df.drop(columns=['user_id', 'time_stamp'])

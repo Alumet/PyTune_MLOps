@@ -9,39 +9,6 @@ import erros
 import pytest
 import pickle
 
-""" data.py test """
-
-
-def test_data_track_score_df():
-    df = pd.DataFrame({'user_id': [1, 1, 2, 2, 3],
-                       'track_id': [1, 2, 1, 1, 2]})
-
-    df_score = data.track_score(df)
-    assert type(df_score) == pd.DataFrame
-    assert list(df_score['listening_count'].values) == [1, 1, 2, 1]
-
-
-def test_data_train_test_split():
-    df = pd.DataFrame({'user_id': [1, 1, 2, 3],
-                       'track_id': [1, 2, 1, 2],
-                       'listening_count': [1, 1, 2, 1]})
-
-    train, test = data.train_test_split(df)
-
-    assert type(train) == csr_matrix
-    assert type(test) == csr_matrix
-
-
-def test_data_track_df():
-    df = pd.DataFrame({'user_id': [1, 1, 2, 3],
-                       'track_id': [1, 2, 1, 2],
-                       'time_stamp': [1, 1, 2, 1]})
-
-    df_track = data.track_df(df)
-
-    assert type(df_track) == pd.DataFrame
-    assert df_track.shape[0] == 2
-
 
 """ model.py test """
 

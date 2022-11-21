@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
 import json
+from data import DataBase
 
 dotenv.load_dotenv()
 
@@ -50,8 +51,13 @@ def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
     :param credentials:
     :return:
     """
+
     username = credentials.username
-    if not (users.get(username)) or not (pwd_context.verify(credentials.password, users[username]['hashed_password'])):
+
+    db = DataBase.instance()
+    user = db.get_user_info('test')
+
+    if not (users.get(username)) or not (pwd_context.verify(credentials.password, user['hashed_password'])):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user name or password",
@@ -80,7 +86,11 @@ async def post_recommendations(request: RecommendationRequest, username: str = D
                                       nb_tracks=request.N_track,
                                       filter=request.filter_already_liked
                                       )
-    result = track_id_to_info(recommendations, model.track_list)
+
+    db = DataBase.instance()
+    track_df = db.get_track_info(recommendations[0])
+
+    result = track_id_to_info(recommendations, track_df)
 
     return result
 
@@ -120,7 +130,7 @@ async def get_train_model(username: str = Depends(get_current_user)) -> dict:
 
 
 @app.post('/user', name='add new user', tags=['admin'], responses=responses)
-async def post_train_model(user_request: User, username: str = Depends(get_current_user)) -> dict:
+async def post_add_user(user_request: User, username: str = Depends(get_current_user)) -> dict:
     """
     Add a new user
     :return: status
