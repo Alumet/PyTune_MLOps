@@ -2,4 +2,3 @@
 *
 # Except this file
 !.gitignore
-!user_database.json
