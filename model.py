@@ -1,4 +1,3 @@
-import pandas as pd
 import implicit
 from implicit.evaluation import ranking_metrics_at_k
 from scipy.sparse import csr_matrix
@@ -15,7 +14,6 @@ class als_model:
     """
 
     def __init__(self, factors: int = 200, iterations: int = 30, alpha: float = 0.5):
-        self.track_list = None  # dict to recover track info from id
         self.data_test = None  # test_data DataFrame
         self.data_train = None  # train_data DataFrame
         self.user_items = None  # train_data csr_matrix
@@ -96,8 +94,9 @@ class als_model:
             with open(path + 'model_als.mdl', 'wb') as file:
                 pickle.dump((self.model_music,
                              self.user_items,
-                             self.data_test,
-                             self.track_list), file)
+                             self.data_test
+                             ),
+                            file)
         else:
             raise erros.ModelNotTrained
 
@@ -110,6 +109,6 @@ class als_model:
             file_path = os.getenv('PRODUCTION_MODEL')
 
         with open(file_path, 'rb') as file:
-            self.model_music, self.user_items, self.data_test, self.track_list = pickle.load(file)
+            self.model_music, self.user_items, self.data_test = pickle.load(file)
 
         # todo test if elements are valid

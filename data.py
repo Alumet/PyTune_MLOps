@@ -71,9 +71,10 @@ class DataBase:
     def save_prediction(self, user_id: int, recommendation: list) -> None:
         date = datetime.datetime.now()
         values = []
+
         track_list, score_list = recommendation
-        for rank, (track, score) in enumerate(zip(track_list, score_list)):
-            values.append((user_id, int(track), float(score), rank+1, date))
+        track_list = ';'.join([str(x) for x in track_list])
+        values.append((user_id, track_list, date))
 
         self._insert('INSERT OR REPLACE INTO prediction', values)
 

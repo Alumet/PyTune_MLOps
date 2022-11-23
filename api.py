@@ -2,7 +2,7 @@ from model import als_model
 from train import train_model
 import dotenv
 from utils import track_id_to_info
-from schemas import RecommendationRequest, User
+from schemas import UserRecommendationRequest, AdminRecommendationRequest, User
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
@@ -41,8 +41,6 @@ model.load()
 ''' Set up Security'''
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBasic()
-with open('data/user_database.json', 'r') as file:
-    users = json.load(file)
 
 
 def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
@@ -55,15 +53,16 @@ def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
     username = credentials.username
 
     db = DataBase.instance()
-    user = db.get_user_info('test')
+    user = db.get_user_info(username)
+    print(pwd_context.verify(credentials.password, user['hashed_password']))
 
-    if not (users.get(username)) or not (pwd_context.verify(credentials.password, user['hashed_password'])):
+    if not (user['username'] == username) or not (pwd_context.verify(credentials.password, user['hashed_password'])):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user name or password",
             headers={"WWW-Authenticate": "Basic"},
         )
-    return credentials.username
+    return user
 
 
 @app.get('/', name='Api test', tags=['home'], responses=responses)
@@ -76,16 +75,23 @@ async def get_index() -> dict:
 
 
 @app.post('/recommendation', name='music recommendations', tags=['recommendation'], responses=responses)
-async def post_recommendations(request: RecommendationRequest, username: str = Depends(get_current_user)) -> dict:
+async def post_recommendations(request: UserRecommendationRequest, user: dict = Depends(get_current_user)) -> dict:
     """
     Rerun N track id to listen to
     :return: List[track_id]
     """
     global model
-    recommendations = model.recommend(user_id=request.user_id,
-                                      nb_tracks=request.N_track,
-                                      filter=request.filter_already_liked
-                                      )
+    try:
+        recommendations = model.recommend(user_id=user['id'],
+                                          nb_tracks=request.N_track,
+                                          filter=request.filter_already_liked
+                                          )
+    except IndexError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User need to add listening events and/ or model needs to be retrained",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
     db = DataBase.instance()
     track_df = db.get_track_info(recommendations[0])
@@ -96,12 +102,12 @@ async def post_recommendations(request: RecommendationRequest, username: str = D
 
 
 @app.get('/model/reload', name='reload model', tags=['admin'], responses=responses)
-async def get_reload_model(username: str = Depends(get_current_user)) -> dict:
+async def get_reload_model(user: dict = Depends(get_current_user)) -> dict:
     """
     Reload model
     :return: status
     """
-    if not users[username]['admin']:
+    if not user['admin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough privilege",
@@ -114,12 +120,12 @@ async def get_reload_model(username: str = Depends(get_current_user)) -> dict:
 
 
 @app.get('/model/train', name='train model', tags=['admin'], responses=responses)
-async def get_train_model(username: str = Depends(get_current_user)) -> dict:
+async def get_train_model(user: dict = Depends(get_current_user)) -> dict:
     """
     Reload model
     :return: status
     """
-    if not users[username]['admin']:
+    if not user['admin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough privilege",
@@ -129,27 +135,22 @@ async def get_train_model(username: str = Depends(get_current_user)) -> dict:
     return {'status': 'model reloaded'}
 
 
-@app.post('/user', name='add new user', tags=['admin'], responses=responses)
-async def post_add_user(user_request: User, username: str = Depends(get_current_user)) -> dict:
+@app.post('/admin/user', name='add new user', tags=['admin'], responses=responses)
+async def post_add_user(user_request: User, user: dict = Depends(get_current_user)) -> dict:
     """
     Add a new user
     :return: status
     """
-    if not users[username]['admin']:
+    if not user['admin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough privilege",
             headers={"WWW-Authenticate": "Basic"},
         )
 
-    if user_request.user_name not in users.keys():
+    if user_request.user_name not in []:
 
-        users[user_request.user_name] = {"username": user_request.user_name,
-                                         "admin": user_request.is_admin,
-                                         "hashed_password": pwd_context.hash(user_request.pass_word)}
-
-        with open('data/user_database.json', 'w') as file:
-            json.dump(users, file, indent=4, sort_keys=True)
+        pass
 
     else:
         raise HTTPException(
@@ -159,3 +160,30 @@ async def post_add_user(user_request: User, username: str = Depends(get_current_
         )
 
     return {'status': 'user added'}
+
+
+@app.post('/admin/recommendation', name='music recommendations', tags=['admin'], responses=responses)
+async def post_recommendations_admin(request: AdminRecommendationRequest, user: dict = Depends(get_current_user)) -> dict:
+    """
+    Rerun N track id to listen to for specific user_id
+    :return: List[track_id]
+    """
+    global model
+    try:
+        recommendations = model.recommend(user_id=request.user_id,
+                                          nb_tracks=request.N_track,
+                                          filter=request.filter_already_liked
+                                          )
+    except IndexError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="user unknown by model, create user and/or add listening events",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    db = DataBase.instance()
+    track_df = db.get_track_info(recommendations[0])
+
+    result = track_id_to_info(recommendations, track_df)
+
+    return result

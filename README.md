@@ -16,10 +16,8 @@ sudo apt install uvicorn
 
 ## GET DATASET
 
-Download dataset at:<br />
-https://www.dropbox.com/s/0rpjdjnr0mgwqyw/data.rar?dl=0
+Download database at:<br />
 
-Extrack .rar file your **"data"** folder
 
 ## SET UP FOLDERS
 
@@ -29,15 +27,17 @@ For the project to work you need to set up a few folders
 - a **model** folder to save and store trained models
 
 ```
+
 project
-│   main.py
+│   api.py
 │   ...
+│
 └───data
-│   │   dataset.csv
-│   └───Fake_users
-│       │   last_fm_fake_user(1001)_jazz.csv
-│       │   last_fm_fake_user(1002)_classic.csv
-│       │   ...
+│   │   pytune.db
+│   │ ...
+│
+└───model
+│   │ ...
 ```
 
 ## SET UP .env FILE
@@ -57,7 +57,7 @@ python3 train.py
 
 ## RUN API
 
-! Place yourself in folder containing main.py !
+! Place yourself in folder containing api.py !
 ```
 uvicorn api:app
 ```
@@ -76,15 +76,49 @@ Open in browser:  http://127.0.0.1:8000/docs
 **admin user**
 ```json
 {
+  "id": 0,
   "username": "admin",
   "password": "admin"
 }
 ```
 
-**test user**
+**admin user**
 ```json
 {
-  "username": "test",
-  "password": "test"
+  "id": 0,
+  "username": "admin",
+  "password": "admin"
 }
 ```
+
+**test fakes users**
+```json
+{
+  "jazz":{
+    "id": 960,
+    "username": "user_jazz",
+    "password": "jazz"
+  },
+  "classic":{
+    "id": 961,
+    "username": "user_classic",
+    "password": "classic"
+  },
+  "pop":{
+    "id": 962,
+    "username": "user_pop",
+    "password": "pop"
+  },
+  "rock":{
+    "id": 963,
+    "username": "user_rock",
+    "password": "rock"
+  },
+  "rap":{
+    "id": 964,
+    "username": "user_rap",
+    "password": "rap"
+  }
+}
+```
+

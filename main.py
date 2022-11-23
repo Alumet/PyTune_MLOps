@@ -16,10 +16,12 @@ for user in [1001, 1002, 1003, 1004, 1005]:
     print(a[['artist_name', 'track_name']])"""
 
 db = DataBase.instance()
-print(db.get_user_info('test'))
+print(db.get_user_info('user_jazz'))
 
 model = als_model()
 model.load()
-reco = model.recommend(user_id=1005, nb_tracks=10)
-db.save_prediction(user_id=1005, recommendation=reco)
+reco = model.recommend(user_id=0, nb_tracks=10)
+print(reco)
+'''
+db.save_prediction(user_id=1005, recommendation=reco)'''
 
