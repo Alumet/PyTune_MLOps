@@ -6,6 +6,8 @@ from typing import Tuple, List
 from scipy.sparse import coo_matrix, csr_matrix
 from implicit.nearest_neighbours import bm25_weight
 from implicit import evaluation
+from schemas import User, Event
+from erros import UserAlreadyExist, TrackDoesNotExist
 
 import sqlite3
 import sqlalchemy
@@ -30,8 +32,8 @@ class DataBase:
                     ins = f"{request} VALUES ({','.join(['?' for i in values[0]])})"
                     connection.execute(ins, values)
                 except Exception as e:
-                    print(e)
                     transaction.rollback()
+                    raise e
                 else:
                     transaction.commit()
 
@@ -87,13 +89,26 @@ class DataBase:
 
         self._insert('INSERT OR REPLACE INTO training', values)
 
-    def add_event(self) -> None:
-        # todo
-        pass
+    def add_event(self, user_id: int, event: Event) -> None:
 
-    def add_user(self) -> None:
-        # todo
-        pass
+        if len(self._request(f"Select * from track where id='{event.track_id}'")) != 0:
+            request = 'INSERT OR REPLACE INTO user_item'
+            date = datetime.datetime.now()
+            values = [(user_id, event.track_id, date)]
+            self._insert(request, values)
+        else:
+            raise TrackDoesNotExist
+
+    def add_user(self, user: User) -> None:
+
+        id = self._request('Select max(id) from user')[0][0] + 1
+
+        if len(self._request(f"Select * from user where name = '{user.user_name}'")) == 0:
+            values = [(id, user.user_name, user.is_admin, user.pass_word)]
+            print(user.pass_word, values)
+            self._insert('INSERT OR REPLACE INTO user', values)
+        else:
+            raise UserAlreadyExist
 
 
 def load_data() -> Tuple[csr_matrix, csr_matrix]:

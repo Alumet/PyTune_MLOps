@@ -17,3 +17,7 @@ class User(BaseModel):
     user_name: str
     pass_word: str
     is_admin: bool = False
+
+
+class Event(BaseModel):
+    track_id: int

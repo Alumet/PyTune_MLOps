@@ -2,11 +2,11 @@ from model import als_model
 from train import train_model
 import dotenv
 from utils import track_id_to_info
-from schemas import UserRecommendationRequest, AdminRecommendationRequest, User
+from schemas import UserRecommendationRequest, AdminRecommendationRequest, User, Event
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
-import json
+from erros import UserAlreadyExist, TrackDoesNotExist
 from data import DataBase
 
 dotenv.load_dotenv()
@@ -54,7 +54,6 @@ def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
 
     db = DataBase.instance()
     user = db.get_user_info(username)
-    print(pwd_context.verify(credentials.password, user['hashed_password']))
 
     if not (user['username'] == username) or not (pwd_context.verify(credentials.password, user['hashed_password'])):
         raise HTTPException(
@@ -89,7 +88,7 @@ async def post_recommendations(request: UserRecommendationRequest, user: dict = 
     except IndexError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="User need to add listening events and/ or model needs to be retrained",
+            detail="User need to add listening events and/or model needs to be retrained",
             headers={"WWW-Authenticate": "Basic"},
         )
 
@@ -101,7 +100,27 @@ async def post_recommendations(request: UserRecommendationRequest, user: dict = 
     return result
 
 
-@app.get('/model/reload', name='reload model', tags=['admin'], responses=responses)
+@app.post('/event', name='add listening event', tags=['recommendation'], responses=responses)
+async def post_event(event: Event, user: dict = Depends(get_current_user)) -> dict:
+    """
+    Rerun N track id to listen to
+    :return: List[track_id]
+    """
+
+    db = DataBase.instance()
+    try:
+        db.add_event(user_id=user['id'], event=event)
+    except TrackDoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Track_id '{event.track_id}' not in database",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    return {'status': 'success'}
+
+
+@app.get('/admin/model/reload', name='reload model', tags=['admin'], responses=responses)
 async def get_reload_model(user: dict = Depends(get_current_user)) -> dict:
     """
     Reload model
@@ -119,7 +138,7 @@ async def get_reload_model(user: dict = Depends(get_current_user)) -> dict:
     return {'status': 'model reloaded'}
 
 
-@app.get('/model/train', name='train model', tags=['admin'], responses=responses)
+@app.get('/admin/model/train', name='train model', tags=['admin'], responses=responses)
 async def get_train_model(user: dict = Depends(get_current_user)) -> dict:
     """
     Reload model
@@ -148,14 +167,15 @@ async def post_add_user(user_request: User, user: dict = Depends(get_current_use
             headers={"WWW-Authenticate": "Basic"},
         )
 
-    if user_request.user_name not in []:
+    db = DataBase.instance()
+    user_request.pass_word = pwd_context.hash(user_request.pass_word)
 
-        pass
-
-    else:
+    try:
+        db.add_user(user_request)
+    except UserAlreadyExist:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="user name already taken",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"User {user_request.user_name} already exist, chose another one",
             headers={"WWW-Authenticate": "Basic"},
         )
 
@@ -163,7 +183,8 @@ async def post_add_user(user_request: User, user: dict = Depends(get_current_use
 
 
 @app.post('/admin/recommendation', name='music recommendations', tags=['admin'], responses=responses)
-async def post_recommendations_admin(request: AdminRecommendationRequest, user: dict = Depends(get_current_user)) -> dict:
+async def post_recommendations_admin(request: AdminRecommendationRequest,
+                                     user: dict = Depends(get_current_user)) -> dict:
     """
     Rerun N track id to listen to for specific user_id
     :return: List[track_id]
