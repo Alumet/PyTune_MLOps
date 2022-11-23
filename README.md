@@ -17,17 +17,16 @@ sudo apt install uvicorn
 ## GET DATASET
 
 Download database at:<br />
-
+https://www.dropbox.com/s/amcndwbpfd7ev6i/pytune.db?dl=0
 
 ## SET UP FOLDERS
 
-For the project to work you need to set up a few folders
+For the project to work you need a few folders
 
 - a **data** folder to store the dataset
 - a **model** folder to save and store trained models
 
 ```
-
 project
 │   api.py
 │   ...
@@ -54,6 +53,13 @@ Train first model or retrain
 ```bash
 python3 train.py
 ```
+Once the model trained it should have been saved in then model folder
+```
+project
+│
+└───model
+│   │ model_asl.mdl
+```
 
 ## RUN API
 
@@ -72,15 +78,6 @@ curl -X GET -i http://127.0.0.1:8000/
 Open in browser:  http://127.0.0.1:8000/docs
 
 ### API DEFAULT USERS
-
-**admin user**
-```json
-{
-  "id": 0,
-  "username": "admin",
-  "password": "admin"
-}
-```
 
 **admin user**
 ```json
