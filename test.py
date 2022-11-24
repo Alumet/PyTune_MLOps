@@ -10,9 +10,9 @@ import erros
 import pytest
 import pickle
 
-import sqlite3, sqlalchemy
-from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, create_engine, text, inspect, Boolean, \
-    Date, Float
+from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, Boolean, Date, Float
+
+from schemas import Event, User
 
 """ model.py test """
 
@@ -130,6 +130,12 @@ def database():
     os.environ['DATA_BASE'] = ":memory:"
     db = data.DataBase.instance()
     yield db
+
+    with db.engine.connect() as connection:
+        with connection.begin() as transaction:
+            for table in ['training', 'prediction', 'user_item', 'track', 'artist', 'user']:
+                connection.execute(f"DROP TABLE {table}")
+            transaction.commit()
 
 
 @pytest.fixture
@@ -255,3 +261,64 @@ def test_save_prediction(database):
 
     assert len(result) == 1
     assert result[0][1] == 'p;r;e;d;i;c;t;i;o;n'
+
+
+@pytest.mark.usefixtures("setup_db")
+def test_add_event(database):
+    event = Event
+    event.track_id = 1
+    database.add_event(user_id=0, event=event)
+
+    with database.engine.connect() as connection:
+        result = connection.execute("Select * from user_item where user_id=0").fetchall()
+
+    assert len(result) == 3
+
+
+@pytest.mark.usefixtures("setup_db")
+def test_add_event_track_doesnt_exist(database):
+    event = Event
+    event.track_id = 10
+    with pytest.raises(erros.TrackDoesNotExist):
+        database.add_event(user_id=0, event=event)
+
+
+@pytest.mark.usefixtures("setup_db")
+def test_add_user(database):
+    user = User
+    user.user_name = 'test'
+    user.pass_word = 'arezaze'
+    user.is_admin = False
+
+    database.add_user(user=user)
+
+    with database.engine.connect() as connection:
+        result = connection.execute("Select * from user where name='test'").fetchall()
+
+    assert len(result) == 1
+
+
+@pytest.mark.usefixtures("setup_db")
+def test_add_user_not_valid(database):
+    user = User
+    user.user_name = 'admin'
+    user.pass_word = 'arezaze'
+    user.is_admin = False
+
+    with pytest.raises(erros.UserAlreadyExist):
+        database.add_user(user=user)
+
+
+""" test DataBase"""
+
+
+def test_train_test_split():
+    df = pd.DataFrame({'track_id': [1, 1, 1, 2, 3],
+                       'user_id': [1, 1, 2, 2, 1],
+                       'listening_count': [3, 3, 1, 4, 1]})
+
+    result = data.train_test_split(df)
+    assert len(result) == 2
+    train, test = result
+    assert type(train) == csr_matrix
+    assert type(test) == csr_matrix
