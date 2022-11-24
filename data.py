@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 from implicit.nearest_neighbours import bm25_weight
 from implicit import evaluation
 from schemas import User, Event
-from erros import UserAlreadyExist, TrackDoesNotExist
+from erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist
 
 import sqlite3
 import sqlalchemy
@@ -17,7 +17,11 @@ from utils import Singleton
 @Singleton
 class DataBase:
     def __init__(self):
-        url = f'sqlite:///{os.getenv("DATA_BASE")}'
+        path = os.getenv("DATA_BASE")
+        if path == ':memory:':
+            url = f'sqlite+pysqlite:///{path}'
+        else:
+            url = f'sqlite:///{path}'
         self.engine = sqlalchemy.create_engine(url)
 
     def _request(self, request: str) -> list:
@@ -49,7 +53,13 @@ class DataBase:
         return df_track
 
     def get_track_info(self, track_list: List[int]) -> pd.DataFrame:
-        request = f'select * from track where id in {tuple(track_list)}'
+
+        if len(track_list) == 1:
+            r = f'({track_list[0]})'
+        else:
+            r = tuple(track_list)
+
+        request = f'select * from track where id in {r}'
         ans = self._request(request)
 
         df = pd.DataFrame({"track_id": [x[0] for x in ans],
@@ -61,7 +71,12 @@ class DataBase:
 
     def get_user_info(self, user_name: str) -> dict:
         request = f"select * from user where name = '{user_name}' limit 1"
-        ans = self._request(request)[0]
+        ans = self._request(request)
+
+        if len(ans) == 0:
+            raise UserDoesNotExist
+        else:
+            ans = ans[0]
 
         user = {'id': ans[0],
                 'username': ans[1],

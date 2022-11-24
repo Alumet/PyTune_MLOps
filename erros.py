@@ -6,5 +6,9 @@ class UserAlreadyExist(Exception):
     pass
 
 
+class UserDoesNotExist(Exception):
+    pass
+
+
 class TrackDoesNotExist(Exception):
     pass
