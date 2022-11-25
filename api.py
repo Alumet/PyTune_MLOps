@@ -1,13 +1,13 @@
-from model import als_model
+from model.model import als_model
 from train import train_model
 import dotenv
-from utils import track_id_to_info
-from schemas import UserRecommendationRequest, AdminRecommendationRequest, User, Event
+from utils.utils import track_id_to_info
+from utils.schemas import UserRecommendationRequest, AdminRecommendationRequest, User, Event
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
-from erros import UserAlreadyExist, TrackDoesNotExist
-from data import DataBase
+from utils.erros import UserAlreadyExist, TrackDoesNotExist
+from utils.data import DataBase
 
 dotenv.load_dotenv()
 

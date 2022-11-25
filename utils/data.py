@@ -6,12 +6,11 @@ from typing import Tuple, List
 from scipy.sparse import coo_matrix, csr_matrix
 from implicit.nearest_neighbours import bm25_weight
 from implicit import evaluation
-from schemas import User, Event
-from erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist
+from utils.schemas import User, Event
+from .erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist
 
-import sqlite3
 import sqlalchemy
-from utils import Singleton
+from utils.utils import Singleton
 
 
 @Singleton

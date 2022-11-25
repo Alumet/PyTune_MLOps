@@ -24,7 +24,7 @@ https://www.dropbox.com/s/amcndwbpfd7ev6i/pytune.db?dl=0
 For the project to work you need a few folders
 
 - a **data** folder to store the dataset
-- a **model** folder to save and store trained models
+- a **production** folder to save and store trained models
 
 ```
 project
@@ -35,7 +35,7 @@ project
 │   │   pytune.db
 │   │ ...
 │
-└───model
+└───production
 │   │ ...
 ```
 
@@ -57,7 +57,7 @@ Once the model trained it should have been saved in then model folder
 ```
 project
 │
-└───model
+└───production
 │   │ model_asl.mdl
 ```
 

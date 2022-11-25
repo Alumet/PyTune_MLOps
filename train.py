@@ -1,6 +1,6 @@
-from model import als_model
+from model.model import als_model
 import dotenv
-import data
+from utils import data
 
 
 def train_model():

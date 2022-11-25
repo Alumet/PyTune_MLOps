@@ -4,7 +4,7 @@ from scipy.sparse import csr_matrix
 import pickle
 from typing import Tuple, List
 import os
-import erros
+from utils import erros
 
 
 class als_model:
