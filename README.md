@@ -16,8 +16,13 @@ sudo apt install uvicorn
 
 ## GET DATASET
 
-Download database at:<br />
+Two options are available:
+
+- Download database at:<br />
 https://www.dropbox.com/s/amcndwbpfd7ev6i/pytune.db?dl=0
+<br /><br />
+- Use mysql database with **alumet/pytune_mysql** docker file<br />
+See Database/README.md
 
 ## SET UP FOLDERS
 
