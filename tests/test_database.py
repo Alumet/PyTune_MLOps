@@ -12,14 +12,14 @@ from utils.schemas import Event, User
 
 
 def test_database(monkeypatch):
-    monkeypatch.setenv("DATA_BASE", ":memory:")
+    monkeypatch.setenv("DATA_BASE", "sqlite+pysqlite:///:memory:")
     db = data.DataBase.instance()
     assert db
 
 
 @pytest.fixture
 def database(monkeypatch):
-    monkeypatch.setenv("DATA_BASE", ":memory:")
+    monkeypatch.setenv("DATA_BASE", "sqlite+pysqlite:///:memory:")
     db = data.DataBase.instance()
     yield db
 

@@ -16,12 +16,14 @@ from utils.utils import Singleton
 @Singleton
 class DataBase:
     def __init__(self):
-        path = os.getenv("DATA_BASE")
-        if path == ':memory:':
-            url = f'sqlite+pysqlite:///{path}'
-        else:
-            url = f'sqlite:///{path}'
+        url = os.getenv("DATA_BASE")
         self.engine = sqlalchemy.create_engine(url)
+
+        # todo : find a better way
+        if 'mysql' in url:
+            self.char = '%s'
+        else:
+            self.char = '?'
 
     def _request(self, request: str) -> list:
         with self.engine.connect() as connection:
@@ -32,7 +34,7 @@ class DataBase:
         with self.engine.connect() as connection:
             with connection.begin() as transaction:
                 try:
-                    ins = f"{request} VALUES ({','.join(['?' for i in values[0]])})"
+                    ins = f"{request} VALUES ({','.join([self.char for i in values[0]])})"
                     connection.execute(ins, values)
                 except Exception as e:
                     transaction.rollback()
@@ -92,7 +94,7 @@ class DataBase:
         track_list = ';'.join([str(x) for x in track_list])
         values.append((user_id, track_list, date))
 
-        self._insert('INSERT OR REPLACE INTO prediction', values)
+        self._insert('INSERT INTO prediction', values)
 
     def save_score(self, score: dict) -> None:
         date = datetime.datetime.now()
@@ -101,12 +103,12 @@ class DataBase:
             s = score[key]
             values.append((date, key, s['precision'], s['map'], s['ndcg'], s['auc']))
 
-        self._insert('INSERT OR REPLACE INTO training', values)
+        self._insert('INSERT INTO training', values)
 
     def add_event(self, user_id: int, event: Event) -> None:
 
         if len(self._request(f"Select * from track where id='{event.track_id}'")) != 0:
-            request = 'INSERT OR REPLACE INTO user_item'
+            request = 'INSERT INTO user_item'
             date = datetime.datetime.now()
             values = [(user_id, event.track_id, date)]
             self._insert(request, values)
@@ -120,7 +122,7 @@ class DataBase:
         if len(self._request(f"Select * from user where name = '{user.user_name}'")) == 0:
             values = [(id, user.user_name, user.is_admin, user.pass_word)]
             print(user.pass_word, values)
-            self._insert('INSERT OR REPLACE INTO user', values)
+            self._insert('INSERT INTO user', values)
         else:
             raise UserAlreadyExist
 
