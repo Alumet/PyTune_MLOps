@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  DB:
+    image: alumet/pytune_mysql:latest
+    networks:
+      - my_network
+    ports:
+      - "3306:3306"
+    container_name: pytune_bdd
+
+  server:
+     image: alumet/pytune_api:latest
+     networks:
+       - my_network
+     ports:
+       - "8000:8000"
+     container_name: pytune_api
+     environment:
+       MODEL_FOLDER: 'production/'
+       PRODUCTION_MODEL: 'production/model_als.mdl'
+       DATA_BASE: 'mysql://root:pytune@DB/main'
+     depends_on:
+       - DB
+
+networks:
+  my_network:
