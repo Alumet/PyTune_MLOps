@@ -93,7 +93,7 @@ def setup_db(database):
 
     with database.engine.connect() as connection:
         with connection.begin() as transaction:
-            values = [(0, 'admin', True, 'ezrar')]
+            values = [(0, 'admin', True, 'admin')]
             connection.execute(f"INSERT OR REPLACE INTO user VALUES (?,?,?,?)", values)
 
             values = [(0, 'artist_0')]
@@ -129,6 +129,7 @@ def test_track_info_single(database):
 @pytest.mark.usefixtures("setup_db")
 def test_track_info_multiple(database):
     ans = database.get_track_info([0, 2])
+    print(ans)
     assert type(ans) == pd.DataFrame
     assert len(ans) == 1
 

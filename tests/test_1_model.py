@@ -79,7 +79,7 @@ def test_model_recommend_untrained():
 
 def test_model_save_untrained(tmpdir):
     m = model.als_model()
-    path = f'{tmpdir}\\'
+    path = f'{tmpdir}/'
     with pytest.raises(erros.ModelNotTrained):
         m.save(path)
 
@@ -94,13 +94,13 @@ def test_model_save_trained(tmpdir):
 
     m.train(train, test)
 
-    path = f'{tmpdir}\\'
+    path = f'{tmpdir}/'
     m.save(path=path)
     assert 'model_als.mdl' in os.listdir(path)
 
 
 def test_model_load(tmpdir):
-    path = f'{tmpdir}\\'
+    path = f'{tmpdir}/'
     with open(path + 'model_als.mdl', 'wb') as file:
         pickle.dump(('model',
                      'mat_train',

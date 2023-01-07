@@ -16,11 +16,11 @@ from utils.utils import Singleton
 @Singleton
 class DataBase:
     def __init__(self):
-        url = os.getenv("DATA_BASE")
-        self.engine = sqlalchemy.create_engine(url)
+        self.url = os.getenv("DATA_BASE")
+        self.engine = sqlalchemy.create_engine(self.url)
 
         # todo : find a better way
-        if 'mysql' in url:
+        if 'mysql' in self.url:
             self.char = '%s'
         else:
             self.char = '?'
