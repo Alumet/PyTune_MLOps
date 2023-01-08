@@ -5,6 +5,7 @@ import pickle
 from typing import Tuple, List
 import os
 from utils import erros
+import warnings
 
 
 class als_model:
@@ -108,7 +109,12 @@ class als_model:
         if not file_path:
             file_path = os.getenv('PRODUCTION_MODEL')
 
-        with open(file_path, 'rb') as file:
-            self.model_music, self.user_items, self.data_test = pickle.load(file)
+        try:
+            with open(file_path, 'rb') as file:
+                self.model_music, self.user_items, self.data_test, t = pickle.load(file)
+        except FileNotFoundError:
+            warnings.warn(f'Model file "{file_path}" not found, blanc model loaded instead. Need to be trained')
+        except ValueError:
+            warnings.warn(f'Model file "{file_path}" not valid, blanc model loaded instead. Need to be trained')
 
         # todo test if elements are valid
