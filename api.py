@@ -189,6 +189,13 @@ async def post_recommendations_admin(request: AdminRecommendationRequest,
     Rerun N track id to listen to for specific user_id
     :return: List[track_id]
     """
+    if not user['admin']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough privilege",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
     global model
     try:
         recommendations = model.recommend(user_id=request.user_id,
