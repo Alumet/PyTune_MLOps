@@ -111,7 +111,7 @@ class als_model:
 
         try:
             with open(file_path, 'rb') as file:
-                self.model_music, self.user_items, self.data_test, t = pickle.load(file)
+                self.model_music, self.user_items, self.data_test = pickle.load(file)
         except FileNotFoundError:
             warnings.warn(f'Model file "{file_path}" not found, blanc model loaded instead. Need to be trained')
         except ValueError:
