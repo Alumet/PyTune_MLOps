@@ -151,7 +151,7 @@ async def get_train_model(user: dict = Depends(get_current_user)) -> dict:
             headers={"WWW-Authenticate": "Basic"},
         )
     train_model()
-    return {'status': 'model reloaded'}
+    return {'status': 'model trained'}
 
 
 @app.post('/admin/user', name='add new user', tags=['admin'], responses=responses)
