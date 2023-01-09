@@ -37,7 +37,7 @@ class als_model:
                                                                 alpha=self.alpha,
                                                                 use_native=True,
                                                                 calculate_training_loss=True,
-                                                                num_threads=-1
+                                                                num_threads=1
                                                                 )
         self.model_music.fit(self.user_items.tocsr())
 
