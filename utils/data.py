@@ -155,6 +155,6 @@ def train_test_split(df: pd.DataFrame, train_size: float = 0.8) -> Tuple[csr_mat
     mat = bm25_weight(mat, K1=100, B=0.8)
     mat = mat.T.tocsr()
 
-    train, test = evaluation.train_test_split(mat, train_percentage=train_size)
+    train, test = evaluation.train_test_split(mat, train_percentage=train_size, random_state=42)
 
     return train, test
