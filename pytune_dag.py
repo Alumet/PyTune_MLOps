@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine
 import json
+import requests
 
 my_dag = DAG(
     dag_id='pytune',
@@ -138,6 +139,11 @@ def change_model(task_instance):
         print("don't reload model")
 
 
+def reload_model_api():
+    x = requests.get('http://server:8000/admin/model/reload', auth=("admin", "admin"))
+    assert x.status_code == 200
+
+
 task_ping_test = PythonOperator(
     task_id='ping_test',
     python_callable=test_DB_connection,
@@ -174,7 +180,14 @@ task_change_model = PythonOperator(
     dag=my_dag
 )
 
+task_load_model = PythonOperator(
+    task_id='load_production_model',
+    python_callable=reload_model_api,
+    dag=my_dag
+)
+
 task_ping_test >> task_load_new
 [task_load_new, task_score_old] >> task_train_new
 task_train_new >> task_compare
 task_compare >> task_change_model
+task_change_model >> task_load_model
