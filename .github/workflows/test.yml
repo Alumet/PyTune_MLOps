@@ -1,8 +1,7 @@
 name: Shell commands
 on:
   push:
-    branches:
-      - ["CI", 'preproduction','main']
+    branches: ["CI", 'preproduction','main']
 jobs:
   qa:
     name: Check tests
