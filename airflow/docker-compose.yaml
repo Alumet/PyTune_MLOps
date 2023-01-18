@@ -57,7 +57,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__SMTP__SMTP_HOST: "smtp.gmail.com"
     AIRFLOW__SMTP__SMTP_PORT: 587
     AIRFLOW__SMTP__SMTP_USER: "de.airflow@gmail.com"
-    AIRFLOW__SMTP__SMTP_PASSWORD: "cfsrvkongsobheta"
+    AIRFLOW__SMTP__SMTP_PASSWORD: '{pw}'
     AIRFLOW__SMTP__SMTP_MAIL_FROM: "de.airflow@gmail.com"
 
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:- pymongo}
