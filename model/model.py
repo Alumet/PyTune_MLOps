@@ -117,5 +117,7 @@ class als_model:
             warnings.warn(f'Model file "{file_path}" not found, blanc model loaded instead. Need to be trained')
         except ValueError:
             warnings.warn(f'Model file "{file_path}" not valid, blanc model loaded instead. Need to be trained')
+        except TypeError:
+            warnings.warn(f'Model file "{file_path}" not valid, blanc model loaded instead. Need to be trained')
 
         # todo test if elements are valid
