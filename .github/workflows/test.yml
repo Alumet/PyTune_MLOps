@@ -22,7 +22,7 @@ jobs:
 
       - name: install mysql
         run: |
-          sudo "y" | apt install python3-dev default-libmysqlclient-dev build-essential
+          "y" | sudo apt install python3-dev default-libmysqlclient-dev build-essential
 
       - name: Install requirements
         run: |
