@@ -17,8 +17,8 @@ jobs:
           python-version: "3.9"
 
       - name: update
-          run: |
-            sudo apt update
+        run: |
+          sudo apt update
 
       - name: install mysql
         run: |
