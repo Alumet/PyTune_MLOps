@@ -1,5 +1,8 @@
 name: Shell commands
-on: [push]
+on:
+  push:
+    branches:
+      - "CI"
 jobs:
   run-shell-command:
     runs-on: ${{ matrix.os }}
