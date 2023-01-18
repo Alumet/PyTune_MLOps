@@ -2,13 +2,13 @@ name: Shell commands
 on:
   push:
     branches:
-      - "CI"
+      - ["CI", 'preproduction','main']
 jobs:
   qa:
     name: Check tests
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout on CI
+      - name: Checkout on branch
         uses: actions/checkout@v3
 
       - name: Set up Python
