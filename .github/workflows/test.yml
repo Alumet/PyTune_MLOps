@@ -4,16 +4,26 @@ on:
     branches:
       - "CI"
 jobs:
-  run-shell-command:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, ubuntu-20.04, ubuntu-18.04]
+  qa:
+    name: Check tests
+    runs-on: ubuntu-20.04
     steps:
-      - name: echo a string
-        run: echo "Hello world"
-      - name: multiline script
+      - name: Checkout on CI
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@master
+        with:
+          python-version: "3.9"
+
+      - name: update
         run: |
-          python3 -V
-          touch my_file_with_workflow.py
-          ls -l
+          "y" | apt install python3-dev default-libmysqlclient-dev build-essential
+
+      - name: Install pytest
+        run: |
+          pip install -r requirements
+
+      - name: Run tests
+        run: |
+          pytest
