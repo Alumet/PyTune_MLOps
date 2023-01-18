@@ -17,10 +17,14 @@ jobs:
           python-version: "3.9"
 
       - name: update
-        run: |
-          "y" | apt install python3-dev default-libmysqlclient-dev build-essential
+          run: |
+            sudo apt update
 
-      - name: Install pytest
+      - name: install mysql
+        run: |
+          sudo "y" | apt install python3-dev default-libmysqlclient-dev build-essential
+
+      - name: Install requirements
         run: |
           pip install -r requirements
 
