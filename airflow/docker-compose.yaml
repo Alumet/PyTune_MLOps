@@ -66,10 +66,10 @@ x-airflow-common: &airflow-common
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
     - type: bind
-      source: ./data
+      source: ../data
       target: /app/data
     - type: bind
-      source: ../pytune/production
+      source: ../production
       target: /app/production
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
   depends_on:
