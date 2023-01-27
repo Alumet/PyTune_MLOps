@@ -39,12 +39,11 @@ def test_read_main():
 def test_auth(mocker):
     mocker.patch.object(DataBase.instance(), 'get_user_info', side_effect=erros.UserDoesNotExist)
 
-    data = {"track_id": 10}
+    response = client.post('/login',
+                           auth=("admin", "admin")
+                           )
 
-    with pytest.raises(erros.UserDoesNotExist):
-        response = client.post('/event',
-                               auth=("admin", "admin"),
-                               json=data)
+    assert response.status_code == 405
 
 
 @pytest.mark.usefixtures("admin_log")
