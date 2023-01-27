@@ -123,8 +123,9 @@ python3 train.py
 
 ### 3.2 - using api
 ```bash
-curl -X GET -i http://127.0.0.1:8000/amdin/model/train -u "admin:admin"
+curl -X GET -i http://127.0.0.1:8000/admin/model/train -u "admin:admin"
 ```
+This cam be long (up to 10 min)
 
 ### 3.3 - using Airflow
 See airflow/Readme.md to set up
@@ -137,6 +138,15 @@ project
 └───production
 │   │ model_asl.mdl
 ```
+
+
+### 4 - RELOAD NEW MODEL
+Load new mode in API
+```bash
+curl -X GET -i http://127.0.0.1:8000/admin/model/reload -u "admin:admin"
+```
+
+
 
 
 
