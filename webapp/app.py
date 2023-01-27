@@ -16,8 +16,18 @@ def add_user(user_name, pass_word):
     return x.status_code == 200
 
 
+def get_reco():
+    data = {"N_track": 10, "filter_already_liked": False}
+    x = requests.post('http://localhost:8000/recommendation', json=data,
+                      auth=(st.session_state.username, st.session_state.password))
+
+    return x.json()
+
+
 with st.sidebar:
     st.title('Pytune')
+
+    st.write("Pytune is an music recommender system based on collaborative filtering")
 
     if 'logged' not in st.session_state:
         st.session_state.logged = False
@@ -27,18 +37,19 @@ with st.sidebar:
         st.session_state.username = st.text_input('username', value='username', label_visibility="collapsed")
         st.session_state.password = st.text_input('password', value='password', label_visibility="collapsed", type="password")
 
-        if st.button('Logg in'):
-            if log_is_valid():
-                st.session_state.logged = True
-                st.experimental_rerun()
-            else:
-                st.experimental_rerun()
-                st.write('Invalid Credentials !')
+        col1, col2 = st.columns(2)
 
-        if st.button('New user'):
-            if add_user(st.session_state.username, st.session_state.password):
-                st.session_state.logged = True
-                st.experimental_rerun()
+        with col1:
+            if st.button('Logg in'):
+                if log_is_valid():
+                    st.session_state.logged = True
+                    st.experimental_rerun()
+
+        with col2:
+            if st.button('New user'):
+                if add_user(st.session_state.username, st.session_state.password):
+                    st.session_state.logged = True
+                    st.experimental_rerun()
 
 
     else:
@@ -50,3 +61,7 @@ with st.sidebar:
 
 if st.session_state.logged:
     st.title('RECOMMENDATION')
+    st.write(get_reco())
+else:
+    st.title('Wellcome to PYTUNE! Please login!')
+
