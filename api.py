@@ -6,7 +6,7 @@ from utils.schemas import UserRecommendationRequest, AdminRecommendationRequest,
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
-from utils.erros import UserAlreadyExist, TrackDoesNotExist
+from utils.erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist
 from utils.data import DataBase
 
 dotenv.load_dotenv()
@@ -53,7 +53,14 @@ def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
     username = credentials.username
 
     db = DataBase.instance()
-    user = db.get_user_info(username)
+    try:
+        user = db.get_user_info(username)
+    except UserDoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect user name or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
     if not (user['username'] == username) or not (pwd_context.verify(credentials.password, user['hashed_password'])):
         raise HTTPException(
@@ -71,6 +78,14 @@ async def get_index() -> dict:
     :return: "running" if alive
     """
     return {'Api status': 'running'}
+
+
+@app.get('/login', name='login', tags=['home'], responses=responses)
+async def get_login(user: dict = Depends(get_current_user)) -> dict:
+    """
+    test if login is valid
+    """
+    return {'login status': 'login ok'}
 
 
 @app.post('/recommendation', name='music recommendations', tags=['recommendation'], responses=responses)
