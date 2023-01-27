@@ -24,3 +24,5 @@ services:
 
 networks:
   my_network:
+    name: pytune
+

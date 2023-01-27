@@ -81,6 +81,8 @@ x-airflow-common: &airflow-common
 services:
   postgres:
     image: postgres:13
+    networks:
+      - my_network
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -95,6 +97,8 @@ services:
 
   redis:
     image: redis:latest
+    networks:
+      - my_network
     ports:
       - 6379:6379
     healthcheck:
@@ -106,6 +110,8 @@ services:
 
   airflow-webserver:
     <<: *airflow-common
+    networks:
+      - my_network
     command: webserver
     ports:
       - 8080:8080
@@ -118,6 +124,8 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
+    networks:
+      - my_network
     command: scheduler
     healthcheck:
       test:
@@ -132,6 +140,8 @@ services:
 
   airflow-worker:
     <<: *airflow-common
+    networks:
+      - my_network
     command: celery worker
     healthcheck:
       test:
@@ -144,6 +154,8 @@ services:
 
   airflow-init:
     <<: *airflow-common
+    networks:
+      - my_network
     command: version
     environment:
       <<: *airflow-common-env
@@ -154,6 +166,8 @@ services:
 
   flower:
     <<: *airflow-common
+    networks:
+      - my_network
     command: celery flower
     ports:
       - 5555:5555
@@ -166,3 +180,7 @@ services:
 
 volumes:
   postgres-db-volume:
+
+networks:
+  my_network:
+    name: pytune
