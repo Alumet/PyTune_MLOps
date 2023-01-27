@@ -1,5 +1,4 @@
-# Pytune AirFlow setup
-
+# AirFlow setup
 
 ## INSTALLATION
 
@@ -31,14 +30,20 @@ Return should be
 git clone https://github.com/Alumet/pytune.git dags
 ```
 
+## DOWNLOAD CSV DATASET
 
+- Download dataset at: https://www.dropbox.com/s/k0wmnuwn41cilmw/dataset.csv?dl=0
+- Copy <span style="color:orange">dataset.csv</span> file in the <span style="color:orange">data</span> folder
 ## RUN
 
-Initialize airflow:
+Run airflow:
 ```bash
 docker-compose up -d
 ```
 
 AirFlow web server will be available on port 
 <span style="color:orange">: 8080</span>
+
+- user: airflow
+- password: airflow
 

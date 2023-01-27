@@ -1,8 +1,34 @@
 # Pytune
 
-pytune is an MLOps project that take place in a Datascientest training
+Pytune is an MLOps project that take place in a Datascientest training.
+The project is to put into production a music recommender model based on
+the Implicit python library trained on the last.fm 1k dataset (cf documentation/Rapport fil rouge - Datascientest - PyTune.pdf)
 
-## INSTALLATION
+This project put into action multiple technologies:
+- FastApi (pytune api)
+- MySQL (pytune database)
+- Docker and docker-compose (virtualization)
+- AirFlow (automation and model training)
+- GitHub actions (CI/CD, unit test, docker build)
+
+# 1 - INSTALLATION
+
+Set up and run pytune API and DataBase. Two options available:
+- using docker-compose
+- using python
+
+## 1.1 - WITH DOCKER-COMPOSE
+This methode use two docker images:
+- alumet/pytune_api:latest
+- alumet/pytune_mysql:latest
+
+You can either build your own docker images using provided Dockerfiles or pull prefab from dockerhub
+
+```bash
+docker-compose up -d
+```
+
+## 1.2 - WITH PYTHON (3.8 or higher)
 
 Install requirements:
 ```bash
@@ -14,57 +40,20 @@ Install uvicorn server with:
 sudo apt install uvicorn
 ```
 
-## GET DATASET
+### GET DATABASE
 
-Two options are available:
+Follow instruction from database_docker/Readme.md
 
-- Download database at:<br />
-https://www.dropbox.com/s/amcndwbpfd7ev6i/pytune.db?dl=0
-<br /><br />
-- Use mysql database with **alumet/pytune_mysql** docker file<br />
-See Database/README.md
-
-## SET UP FOLDERS
-
-For the project to work you need a few folders
-
-- a **data** folder to store the dataset
-- a **production** folder to save and store trained models
-
-```
-project
-│   api.py
-│   ...
-│
-└───data
-│   │   pytune.db
-│   │ ...
-│
-└───production
-│   │ ...
-```
-
-## SET UP .env FILE
+### SET UP .env FILE
 
 Create .env file from template
 ```bash
 cp .env_template .env
 ```
-File all Environment Variables with path to your data and model folders
-
-## TRAIN MODEL
-
-Train first model or retrain
-```bash
-python3 train.py
-```
-Once the model trained it should have been saved in then model folder
-```
-project
-│
-└───production
-│   │ model_asl.mdl
-```
+File all Environment Variables with:
+- url to database (mysql)
+- model folders (default production)
+- production model (default als_model.mdl)
 
 ## RUN API
 
@@ -73,16 +62,16 @@ project
 uvicorn api:app
 ```
 
-### Test API
-Open in browser:  http://127.0.0.1:8000
+# 2 - Test API
+For both methods python or docker, open in browser:  http://127.0.0.1:8000
 ```bash
 curl -X GET -i http://127.0.0.1:8000/
 ```
 
-### Documentation
+## Documentation
 Open in browser:  http://127.0.0.1:8000/docs
 
-### API DEFAULT USERS
+## Api default users
 
 **admin user**
 ```json
@@ -123,4 +112,31 @@ Open in browser:  http://127.0.0.1:8000/docs
   }
 }
 ```
+
+## 3 - TRAIN FIRST MODEL
+
+### 3.1 - using python installation
+Step 2.1 required
+```bash
+python3 train.py
+```
+
+### 3.2 - using api
+```bash
+curl -X GET -i http://127.0.0.1:8000/amdin/model/train -u "admin:admin"
+```
+
+### 3.3 - using Airflow
+See airflow/Readme.md to set up
+
+
+Once the model trained it should have been saved in then model folder
+```
+project
+│
+└───production
+│   │ model_asl.mdl
+```
+
+
 
