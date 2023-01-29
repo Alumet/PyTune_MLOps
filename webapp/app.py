@@ -5,7 +5,7 @@ from youtubesearchpython import VideosSearch
 st.set_page_config(layout="wide")
 
 if 'url' not in st.session_state:
-    st.session_state.url = None
+    st.session_state.video_url = None
 
 
 def log_is_valid() -> bool:
@@ -37,7 +37,9 @@ def update_reco() -> None:
         reco = dict()
 
     for key in reco:
-        st.session_state.track_list.append(reco.get(key))
+        track = reco.get(key)
+        if track not in st.session_state.track_list:
+            st.session_state.track_list.append(reco.get(key))
 
 
 def youtube_search(track: dict, id: int) -> None:
@@ -45,10 +47,13 @@ def youtube_search(track: dict, id: int) -> None:
 
     txt = label = track.get('artist_name') + ' ' + track.get('track_name')
     videos_search = VideosSearch(txt, limit=1)
-    url = videos_search.result()['result'][0]['link']
+
+    url = videos_search.result().get('result')[0].get('link')
+    length = videos_search.result().get('result')[0].get('duration')
 
     st.session_state.track_list.pop(id)
-    st.session_state.url = url
+    st.session_state.video_url = url
+    st.session_state.video_length = length
 
 
 with st.sidebar:
@@ -84,7 +89,9 @@ with st.sidebar:
         if st.button('Log out'):
             st.session_state.logged = False
             st.session_state.track_list = list()
+            st.session_state.video_url = None
             st.experimental_rerun()
+
 
 if st.session_state.logged:
 
@@ -94,11 +101,12 @@ if st.session_state.logged:
 
     with col2:
         st.title('PLAYER')
-        if not st.session_state.url:
+        if not st.session_state.video_url:
             youtube_search(st.session_state.track_list[0], 0)
-        st.video(st.session_state.url)
-        st.write(st.session_state.playing.get("artist_name"))
-        st.write(st.session_state.playing.get("track_name"))
+        st.video(st.session_state.video_url)
+        st.write('Artist: ', st.session_state.playing.get("artist_name"))
+        st.write('Track: ', st.session_state.playing.get("track_name"))
+        st.write('Duration: ', st.session_state.video_length)
 
     with col1:
         st.title('SEARCH')
