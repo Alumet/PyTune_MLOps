@@ -42,6 +42,18 @@ class DataBase:
                 else:
                     transaction.commit()
 
+    def search_item(self, txt: str) -> dict:
+
+        request = f"Select * from track where title LIKE '%%{txt}%%' LIMIT 20"
+        ans = self._request(request)
+
+        df = pd.DataFrame({"track_id": [x[0] for x in ans],
+                           "track_name": [x[1] for x in ans],
+                           "artist_id": [x[2] for x in ans],
+                           "artist_name": [x[3] for x in ans]
+                           })
+        return df
+
     def get_user_item(self, date: datetime.date = datetime.datetime.now()):
         request = f'select user_id, track_id from user_item where time_stamp <= "{date}"'
         ans = self._request(request)

@@ -2,16 +2,26 @@ from typing import List, Tuple
 import pandas as pd
 
 
-def track_id_to_info(recommendations: Tuple, track_df: pd.DataFrame) -> dict:
-    tracks, scores = recommendations
-
+def track_id_to_info(track_df: pd.DataFrame, recommendations: Tuple=None) -> dict:
     result = {}
-    for i, (track_id, score) in enumerate(zip(tracks, scores)):
-        track = track_df[track_df['track_id'] == track_id].iloc[0]
-        result[i + 1] = {"track_id": int(track_id),
-                         "score": float(score),
-                         "track_name": track['track_name'],
-                         "artist_name": track['artist_name']}
+
+    if recommendations:
+        tracks, scores = recommendations
+
+        for i, (track_id, score) in enumerate(zip(tracks, scores)):
+            track = track_df[track_df['track_id'] == track_id].iloc[0]
+            result[i + 1] = {"track_id": int(track_id),
+                             "score": float(score),
+                             "track_name": track['track_name'],
+                             "artist_name": track['artist_name']}
+
+    else:
+
+        for i, track_id in enumerate(track_df['track_id'].unique()):
+            track = track_df[track_df['track_id'] == track_id].iloc[0]
+            result[i + 1] = {"track_id": int(track_id),
+                             "track_name": track['track_name'],
+                             "artist_name": track['artist_name']}
 
     return result
 

@@ -88,6 +88,21 @@ async def get_login(user: dict = Depends(get_current_user)) -> dict:
     return {'login status': 'login ok'}
 
 
+@app.post('/search', name='music search', tags=['home'], responses=responses)
+async def post_recommendations(search: str, user: dict = Depends(get_current_user)) -> dict:
+    """
+    return track with search in title
+    :return: List[track_id]
+    """
+
+    db = DataBase.instance()
+    track_df = db.search_item(search)
+
+    result = track_id_to_info(track_df)
+
+    return result
+
+
 @app.post('/recommendation', name='music recommendations', tags=['recommendation'], responses=responses)
 async def post_recommendations(request: UserRecommendationRequest, user: dict = Depends(get_current_user)) -> dict:
     """
@@ -110,7 +125,7 @@ async def post_recommendations(request: UserRecommendationRequest, user: dict = 
     db = DataBase.instance()
     track_df = db.get_track_info(recommendations[0])
 
-    result = track_id_to_info(recommendations, track_df)
+    result = track_id_to_info(track_df, recommendations)
 
     return result
 

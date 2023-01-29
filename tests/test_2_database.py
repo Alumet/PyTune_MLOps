@@ -121,6 +121,18 @@ def test_user_info_doesnt_exist(database):
 
 
 @pytest.mark.usefixtures("setup_db")
+def test_search_item(database):
+    track = database.search_item('song')
+    assert len(track) == 2
+
+    track = database.search_item('song_0')
+    assert len(track) == 1
+
+    track = database.search_item('none')
+    assert len(track) == 0
+
+
+@pytest.mark.usefixtures("setup_db")
 def test_track_info_single(database):
     track = database.get_track_info([0])
     assert len(track) == 1

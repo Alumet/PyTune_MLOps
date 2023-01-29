@@ -4,8 +4,10 @@ from youtubesearchpython import VideosSearch
 
 st.set_page_config(layout="wide")
 
-if 'url' not in st.session_state:
+if 'video_url' not in st.session_state:
     st.session_state.video_url = None
+if 'search' not in st.session_state:
+    st.session_state.search = None
 
 
 def log_is_valid() -> bool:
@@ -32,7 +34,10 @@ def update_reco() -> None:
         data = {"N_track": n_track, "filter_already_liked": True}
         x = requests.post('http://localhost:8000/recommendation', json=data,
                           auth=(st.session_state.username, st.session_state.password))
-        reco = x.json()
+        if x.status_code != 200:
+            reco = dict()
+        else:
+            reco = x.json()
     else:
         reco = dict()
 
@@ -42,24 +47,42 @@ def update_reco() -> None:
             st.session_state.track_list.append(reco.get(key))
 
 
-def youtube_search(track: dict, id: int) -> None:
+def add_event(track) -> None:
+
+    data = {"track_id": track.get('track_id')}
+    x = requests.post('http://localhost:8000/event', json=data,
+                      auth=(st.session_state.username, st.session_state.password))
+
+
+def play(track: dict, id: int, remove: bool = False) -> None:
     st.session_state.playing = track
 
-    txt = label = track.get('artist_name') + ' ' + track.get('track_name')
+    txt = track.get('artist_name') + ' ' + track.get('track_name')
     videos_search = VideosSearch(txt, limit=1)
 
     url = videos_search.result().get('result')[0].get('link')
     length = videos_search.result().get('result')[0].get('duration')
 
-    st.session_state.track_list.pop(id)
+    if remove:
+        st.session_state.track_list.pop(id)
+
     st.session_state.video_url = url
     st.session_state.video_length = length
+
+    add_event(track)
+
+
+def track_search(txt):
+    data = {"search": txt}
+    x = requests.post('http://localhost:8000/search', params=data,
+                      auth=(st.session_state.username, st.session_state.password))
+    ans = x.json()
+
+    st.session_state.search_result = [ans.get(key) for key in ans]
 
 
 with st.sidebar:
     st.title('Pytune')
-
-    st.write("Pytune is an music recommender system based on collaborative filtering")
 
     if 'logged' not in st.session_state:
         st.session_state.logged = False
@@ -101,24 +124,44 @@ if st.session_state.logged:
 
     with col2:
         st.title('PLAYER')
-        if not st.session_state.video_url:
-            youtube_search(st.session_state.track_list[0], 0)
-        st.video(st.session_state.video_url)
-        st.write('Artist: ', st.session_state.playing.get("artist_name"))
-        st.write('Track: ', st.session_state.playing.get("track_name"))
-        st.write('Duration: ', st.session_state.video_length)
+
+        if not st.session_state.video_url and st.session_state.track_list != []:
+            play(st.session_state.track_list[0], 0)
+
+        if st.session_state.video_url:
+            st.video(st.session_state.video_url)
+            st.write('Artist: ', st.session_state.playing.get("artist_name"))
+            st.write('Track: ', st.session_state.playing.get("track_name"))
+            st.write('Duration: ', st.session_state.video_length)
 
     with col1:
         st.title('SEARCH')
         search = st.text_input('search', value='', label_visibility="collapsed")
+
         if search != '':
-            st.write('searching')
+            if search != st.session_state.search:
+                track_search(search)
+                st.session_state.search = search
+            with st.expander('Search result'):
+                for id, track in enumerate(st.session_state.search_result):
+                    label = track.get('artist_name') + ' --->  ' + track.get('track_name')
+                    st.button(label=label, on_click=play, args=[track, id], key=label+'search')
+                    if id >= 10:
+                        break
+
         st.title('RECOMMENDATION')
+        if not st.session_state.track_list:
+            st.write('No recommendation available yet !')
+            st.write('   1 - search for track')
+            st.write('   2 - listen to one track')
+            st.write('   3 - basic recommendation will be available')
+
         for id, track in enumerate(st.session_state.track_list):
             label = track.get('artist_name') + ' --->  ' + track.get('track_name')
-            st.button(label=label, on_click=youtube_search, args=[track, id], key=label)
+            st.button(label=label, on_click=play, args=[track, id, True], key=label+'reco')
             if id >= 5:
                 break
 
 else:
     st.title('Wellcome to PYTUNE! Please login!')
+    st.write("Pytune is an music recommender system based on collaborative filtering")
