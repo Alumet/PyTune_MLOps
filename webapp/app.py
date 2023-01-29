@@ -8,17 +8,21 @@ if 'video_url' not in st.session_state:
     st.session_state.video_url = None
 if 'search' not in st.session_state:
     st.session_state.search = None
+if 'listened_tracks' not in st.session_state:
+    st.session_state.listened_tracks = list()
+
+api_url = 'http://127.0.0.1:8000'
 
 
 def log_is_valid() -> bool:
-    x = requests.get('http://localhost:8000/login',
+    x = requests.get(f'{api_url}/login',
                      auth=(st.session_state.username, st.session_state.password))
     return x.status_code == 200
 
 
 def add_user(user_name: str, pass_word: str) -> bool:
     data = {"user_name": user_name, "pass_word": pass_word, "is_admin": False}
-    x = requests.post('http://localhost:8000/admin/user', json=data,
+    x = requests.post(f'{api_url}/admin/user', json=data,
                       auth=('admin', 'admin'))
 
     return x.status_code == 200
@@ -32,10 +36,16 @@ def update_reco() -> None:
 
     if n_track > 10:
         data = {"N_track": n_track, "filter_already_liked": True}
-        x = requests.post('http://localhost:8000/recommendation', json=data,
+        x = requests.post(f'{api_url}/recommendation', json=data,
                           auth=(st.session_state.username, st.session_state.password))
         if x.status_code != 200:
-            reco = dict()
+            if st.session_state.listened_tracks:
+                data = {"N_track": 3, 'track_id': st.session_state.listened_tracks[-1]}
+                x = requests.post(f'{api_url}/similar', json=data,
+                                  auth=(st.session_state.username, st.session_state.password))
+                reco = x.json()
+            else:
+                reco = dict()
         else:
             reco = x.json()
     else:
@@ -50,8 +60,17 @@ def update_reco() -> None:
 def add_event(track) -> None:
 
     data = {"track_id": track.get('track_id')}
-    x = requests.post('http://localhost:8000/event', json=data,
+    x = requests.post(f'{api_url}/event', json=data,
                       auth=(st.session_state.username, st.session_state.password))
+
+
+def track_search(txt):
+    data = {"search": txt}
+    x = requests.post(f'{api_url}/search', params=data,
+                      auth=(st.session_state.username, st.session_state.password))
+    ans = x.json()
+
+    st.session_state.search_result = [ans.get(key) for key in ans]
 
 
 def play(track: dict, id: int, remove: bool = False) -> None:
@@ -70,15 +89,7 @@ def play(track: dict, id: int, remove: bool = False) -> None:
     st.session_state.video_length = length
 
     add_event(track)
-
-
-def track_search(txt):
-    data = {"search": txt}
-    x = requests.post('http://localhost:8000/search', params=data,
-                      auth=(st.session_state.username, st.session_state.password))
-    ans = x.json()
-
-    st.session_state.search_result = [ans.get(key) for key in ans]
+    st.session_state.listened_tracks.append(track.get('track_id'))
 
 
 with st.sidebar:
@@ -113,6 +124,7 @@ with st.sidebar:
             st.session_state.logged = False
             st.session_state.track_list = list()
             st.session_state.video_url = None
+            st.session_state.listened_tracks = list()
             st.experimental_rerun()
 
 
