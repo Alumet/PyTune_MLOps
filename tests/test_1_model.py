@@ -77,6 +77,30 @@ def test_model_recommend_untrained():
         reco = m.recommend(user_id=1, nb_tracks=2)
 
 
+def test_model_similar_trained():
+    m = model.als_model(factors=10,
+                        iterations=1,
+                        alpha=1)
+
+    train = csr_matrix(([1, 1, 1, 1], ([1, 2, 1, 2], [1, 1, 2, 3])))
+    test = csr_matrix(([1, 1, 1, 1], ([1, 2, 1, 2], [1, 1, 2, 3])))
+
+    m.train(train, test)
+
+    reco = m.similar_item(item_id=1, nb_tracks=2)
+
+    assert type(reco) == tuple
+    assert len(reco) == 2
+    assert type(reco[0]) == np.ndarray
+    assert type(reco[1]) == np.ndarray
+
+
+def test_model_similar_untrained():
+    m = model.als_model()
+    with pytest.raises(erros.ModelNotTrained):
+        reco = m.similar_item(item_id=1, nb_tracks=2)
+
+
 def test_model_save_untrained(tmpdir):
     m = model.als_model()
     path = f'{tmpdir}/'

@@ -71,6 +71,30 @@ def test_recommendation(mocker):
 
 
 @pytest.mark.usefixtures("admin_log")
+def test_similar(mocker):
+    df = pd.DataFrame({"track_id": [1, 2],
+                       "track_name": ['track_1', 'track_2'],
+                       "artist_id": [0, 0],
+                       "artist_name": ['artist_0', 'artist_0']
+                       })
+
+    mocker.patch.object(DataBase.instance(), 'get_track_info', return_value=df)
+
+    mocker.patch.object(als_model, 'similar_item', return_value=(np.array([1, 2]), np.array([0, 0])))
+
+    data = {"N_track": 10,
+            "track_id": 1
+            }
+
+    response = client.post('/similar',
+                           auth=("admin", "admin"),
+                           json=data)
+
+    assert response.status_code == 200
+    assert type(response.json()) == dict
+
+
+@pytest.mark.usefixtures("admin_log")
 def test_event(mocker):
     mocker.patch.object(DataBase.instance(), 'add_event', return_value=None)
 
