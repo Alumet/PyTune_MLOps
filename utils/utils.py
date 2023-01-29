@@ -2,7 +2,7 @@ from typing import List, Tuple
 import pandas as pd
 
 
-def track_id_to_info(track_df: pd.DataFrame, recommendations: Tuple=None) -> dict:
+def track_id_to_info(track_df: pd.DataFrame, recommendations: Tuple = None) -> dict:
     result = {}
 
     if recommendations:

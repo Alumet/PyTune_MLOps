@@ -2,6 +2,8 @@ from model.model import als_model
 import dotenv
 from utils import data
 
+dotenv.load_dotenv()
+
 
 def train_model():
     model = als_model()

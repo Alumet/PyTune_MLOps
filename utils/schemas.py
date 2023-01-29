@@ -7,6 +7,11 @@ class UserRecommendationRequest(BaseModel):
     filter_already_liked: bool = False
 
 
+class UserSimilarRequest(BaseModel):
+    track_id: int = 1
+    N_track: int = 10
+
+
 class AdminRecommendationRequest(BaseModel):
     user_id: int = 1
     N_track: int = 10

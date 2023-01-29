@@ -2,7 +2,7 @@ from model.model import als_model
 from train import train_model
 import dotenv
 from utils.utils import track_id_to_info
-from utils.schemas import UserRecommendationRequest, AdminRecommendationRequest, User, Event
+from utils.schemas import UserRecommendationRequest, UserSimilarRequest, AdminRecommendationRequest, User, Event
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
@@ -89,7 +89,7 @@ async def get_login(user: dict = Depends(get_current_user)) -> dict:
 
 
 @app.post('/search', name='music search', tags=['home'], responses=responses)
-async def post_recommendations(search: str, user: dict = Depends(get_current_user)) -> dict:
+async def post_search(search: str, user: dict = Depends(get_current_user)) -> dict:
     """
     return track with search in title
     :return: List[track_id]
@@ -119,6 +119,32 @@ async def post_recommendations(request: UserRecommendationRequest, user: dict = 
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="User need to add listening events and/or model needs to be retrained",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    db = DataBase.instance()
+    track_df = db.get_track_info(recommendations[0])
+
+    result = track_id_to_info(track_df, recommendations)
+
+    return result
+
+
+@app.post('/similar', name='similar track', tags=['recommendation'], responses=responses)
+async def post_similar(request: UserSimilarRequest, user: dict = Depends(get_current_user)) -> dict:
+    """
+    Rerun N track id similar to track_id
+    :return: List[track_id]
+    """
+    global model
+    try:
+        recommendations = model.similar_item(item_id=request.track_id,
+                                             nb_tracks=request.N_track
+                                             )
+    except IndexError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Unknown track id",
             headers={"WWW-Authenticate": "Basic"},
         )
 

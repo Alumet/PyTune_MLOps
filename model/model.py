@@ -76,6 +76,21 @@ class als_model:
                                                     N=nb_tracks)
         return recommendation
 
+    def similar_item(self, item_id: int, nb_tracks: int = 10) -> Tuple[List[int], List[float]]:
+        """
+        Recommend n track similar to item
+        :param item_id: int track id
+        :param nb_tracks: nb of track to return
+        :return:
+        """
+        if self.model_music is None:
+            raise erros.ModelNotTrained
+
+        recommendation = self.model_music.similar_items(itemid=item_id,
+                                                        item_users=self.user_items,
+                                                        N=nb_tracks)
+        return recommendation
+
     def rank_item(self, user_id: int, item_list: list):
         ranks = self.model_music.recommend(userid=user_id,
                                            user_items=self.user_items[user_id],
