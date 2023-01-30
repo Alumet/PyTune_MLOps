@@ -37,6 +37,7 @@ git clone https://github.com/Alumet/pytune.git dags
 ## RUN
 
 Run airflow:
+All docker-compose are set up to run on the same network(pytune) to allow communication between services 
 ```bash
 docker-compose up -d
 ```
