@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  webapp:
+    image: alumet/pytune_webapp:latest
+    networks:
+      - my_network
+    ports:
+      - "9000:9000"
+    environment:
+      API_URL: 'http://server:8000'
+    container_name: pytune_web
+
+networks:
+  my_network:
+    name: pytune
