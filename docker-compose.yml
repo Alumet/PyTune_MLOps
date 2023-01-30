@@ -15,6 +15,11 @@ services:
      ports:
        - "8000:8000"
      container_name: pytune_api
+     volumes:
+       - type: bind
+         source: ./production
+         target: /app/production
+
      environment:
        MODEL_FOLDER: 'production/'
        PRODUCTION_MODEL: 'production/model_als.mdl'
