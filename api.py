@@ -17,8 +17,8 @@ app = FastAPI(title="Pytune music recommender API",
               openapi_tags=[{'name': 'home',
                              'description': 'endpoints made for api test'
                              },
-                            {'name': 'recommendation',
-                             'description': 'recommender endpoints'
+                            {'name': 'user',
+                             'description': 'user interaction'
                              },
                             {'name': 'admin',
                              'description': 'admin area'
@@ -88,7 +88,7 @@ async def get_login(user: dict = Depends(get_current_user)) -> dict:
     return {'login status': 'login ok'}
 
 
-@app.post('/search', name='music search', tags=['home'], responses=responses)
+@app.post('/search', name='music search', tags=['user'], responses=responses)
 async def post_search(search: str, user: dict = Depends(get_current_user)) -> dict:
     """
     return track with search in title
@@ -103,7 +103,7 @@ async def post_search(search: str, user: dict = Depends(get_current_user)) -> di
     return result
 
 
-@app.post('/recommendation', name='music recommendations', tags=['recommendation'], responses=responses)
+@app.post('/recommendation', name='music recommendations', tags=['user'], responses=responses)
 async def post_recommendations(request: UserRecommendationRequest, user: dict = Depends(get_current_user)) -> dict:
     """
     Rerun N track id to listen to
@@ -130,7 +130,7 @@ async def post_recommendations(request: UserRecommendationRequest, user: dict = 
     return result
 
 
-@app.post('/similar', name='similar track', tags=['recommendation'], responses=responses)
+@app.post('/similar', name='similar track', tags=['user'], responses=responses)
 async def post_similar(request: UserSimilarRequest, user: dict = Depends(get_current_user)) -> dict:
     """
     Rerun N track id similar to track_id
@@ -156,7 +156,7 @@ async def post_similar(request: UserSimilarRequest, user: dict = Depends(get_cur
     return result
 
 
-@app.post('/event', name='add listening event', tags=['recommendation'], responses=responses)
+@app.post('/event', name='add listening event', tags=['user'], responses=responses)
 async def post_event(event: Event, user: dict = Depends(get_current_user)) -> dict:
     """
     Rerun N track id to listen to
