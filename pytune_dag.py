@@ -19,6 +19,7 @@ my_dag = DAG(
     default_args={
         'owner': 'airflow',
         'start_date': days_ago(2),
+        'max_active_runs': 1
     }
 )
 
