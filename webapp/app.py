@@ -1,6 +1,11 @@
 import streamlit as st
 import requests
 from youtubesearchpython import VideosSearch
+import dotenv
+import os
+from random import shuffle
+
+dotenv.load_dotenv()
 
 st.set_page_config(layout="wide")
 
@@ -11,7 +16,7 @@ if 'search' not in st.session_state:
 if 'listened_tracks' not in st.session_state:
     st.session_state.listened_tracks = list()
 
-api_url = 'http://127.0.0.1:8000'
+api_url = os.getenv('API_URL')
 
 
 def log_is_valid() -> bool:
@@ -55,6 +60,8 @@ def update_reco() -> None:
         track = reco.get(key)
         if track not in st.session_state.track_list:
             st.session_state.track_list.append(reco.get(key))
+
+    shuffle(st.session_state.track_list)
 
 
 def add_event(track) -> None:
@@ -138,7 +145,7 @@ if st.session_state.logged:
         st.title('PLAYER')
 
         if not st.session_state.video_url and st.session_state.track_list != []:
-            play(st.session_state.track_list[0], 0)
+            play(st.session_state.track_list[0], 0, True)
 
         if st.session_state.video_url:
             st.video(st.session_state.video_url)
