@@ -28,6 +28,22 @@ Build alumet/pytune_msql using setup.sh file and Dockerfile
 docker run --name pytune_ddb -d alumet/pytune_msql
 ```
 
+### Set UP
+
+```bash
+docker run --name pytune_ddb -d alumet/pytune_msql
+docker exec -it pytune_bdd bash
+
+mysql -uroot -p pytune # connect to MySQL
+
+GRANT ALL PRIVILEGES ON * . * TO 'pytune'@'localhost';
+FLUSH PRIVILEGES;
+CREATE DATABASE main; #create main database
+exit # exit Mysql
+
+exit # exit container
+```
+
 ### Populate
 
 - Download .scv dataset at: https://www.dropbox.com/s/k0wmnuwn41cilmw/dataset.csv?dl=0
