@@ -71,7 +71,7 @@ class API:
     def reco_similar() -> List:
         reco = list()
         for i, id in enumerate(st.session_state.listened_tracks[::-1]):
-            data = {"N_track": 2, 'track_id': id}
+            data = {"N_track": 3, 'track_id': id}
             x = requests.post(f'{api_url}/similar', json=data,
                               auth=(st.session_state.username, st.session_state.password))
             if x.status_code == 200:
@@ -237,5 +237,7 @@ if __name__ == "__main__":
     if st.session_state.logged:
         reco_widget()
     else:
-        st.title('Wellcome to PYTUNE! Please login!')
+        st.title('Wellcome to PYTUNE!')
         st.write("Pytune is an music recommender system based on collaborative filtering")
+        st.write("In order to use you need first to log in or create an account")
+
