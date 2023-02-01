@@ -208,10 +208,10 @@ def reco_widget():
         st.title('RECOMMENDATION')
         if not st.session_state.track_list:
             st.write('No recommendation available yet !')
-            st.write('   1 - search for track')
-            st.write('   2 - listen to one track')
-            st.write('   3 - basic recommendation will be available')
-            st.write('   4 - personalised recommendation will be available model retrain')
+            st.write('   1 - Search for track')
+            st.write('   2 - Listen to one track')
+            st.write('   3 - Basic recommendation will be available')
+            st.write('   4 - Personalised recommendation will be available after model retrain')
 
         for id, track in enumerate(st.session_state.track_list):
             label = track.get('artist_name') + ' --->  ' + track.get('track_name')
