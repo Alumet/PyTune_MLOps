@@ -176,7 +176,15 @@ Open in browser:  http://127.0.0.1:8000/docs
 This cam be long (up to 15 min) and require at least 
 6Go of RAM
 
-### 5.2 - user pretrained model
+>Once the model trained it should have been saved in then model folder
+>```
+>project
+>│
+>└───production
+>│   │ model_asl.mdl
+>```
+
+### 5.2 - using pretrained model
 Download model at https://www.dropbox.com/s/z8p5knhkn88884a/model_als.mdl?dl=0
 
 Place file model_als.mdl in **production** folder
@@ -197,15 +205,6 @@ curl -X GET -i http://127.0.0.1:8000/admin/model/train -u "admin:admin"
 See airflow/Readme.md to set up
 
 
->Once the model trained it should have been saved in then model folder
->```
->project
->│
->└───production
->│   │ model_asl.mdl
->```
-
-
 ### 6 - RELOAD NEW MODEL
 Load new mode in API. Restart API server or use reload end point
 ```bash
@@ -213,7 +212,7 @@ curl -X GET -i http://127.0.0.1:8000/admin/model/reload -u "admin:admin"
 ```
 
 
-### 7 - USE EXAMPLE
+### 7 - API USE EXAMPLE
 
 Search track title containing "smells"
 ```bash

@@ -25,7 +25,7 @@ Return should be
 <span style="color:orange">: **start_airflow-init_1 exited with code 0**</span>
 
 ## ADD DAGS
-
+Clone git repo in dags folder
 ```bash
 git clone https://github.com/Alumet/pytune.git dags
 ```
@@ -33,7 +33,7 @@ git clone https://github.com/Alumet/pytune.git dags
 ## DOWNLOAD CSV DATASET
 
 - Download dataset at: https://www.dropbox.com/s/k0wmnuwn41cilmw/dataset.csv?dl=0
-- Copy <span style="color:orange">dataset.csv</span> file in the <span style="color:orange">data</span> folder
+- Copy <span style="color:orange">dataset.csv</span> file in the <span style="color:orange">data</span> folder (root)
 ## RUN
 
 Run airflow:
