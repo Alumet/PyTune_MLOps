@@ -1,7 +1,7 @@
 # Pytune
 
 Pytune is an MLOps project that take place in a Datascientest training.
-The project is to put into production a music recommender model based on
+The goal is to put into production a music recommender model based on
 the Implicit python library trained on the last.fm 1k dataset (cf documentation/Rapport fil rouge - Datascientest - PyTune.pdf)
 
 This project put into action multiple technologies:
@@ -11,24 +11,80 @@ This project put into action multiple technologies:
 - AirFlow (automation and model training)
 - GitHub actions (CI/CD, unit test, docker build)
 
-# 1 - INSTALLATION
+# 1 - DOCUMENTATION
 
-Set up and run pytune API and DataBase. Two options available:
+Both reports documenting "data science" and "MLOps" aspect of the projetc
+are available int the documentation root directory.
+
+- Rapport fil rouge - Datascientest - PyTune.pdf
+- Rapport MLOps - Datascientest - PytTune.pdf
+
+# 2 - THE PROJECT
+
+The project is build with modularity in mind so your not obliged to 
+run all component. Sub-applications orchestrate around a core 
+application. In order to make things simple all docker-compose uses 
+the same predefined network (pytune). 
+
+- **CORE APP**
+  - docker: pytune_api + pytune_bdd 
+  - purpose: recommendation api and data base 
+
+- **AIRFLOW**
+  - docker: airflow
+  - purpose: automation and monitoring
+  
+- **WEB APP**
+  - docker: pytune_webapp
+  - purpose: front user interface
+
+# 3 - INSTALLATION
+
+Set up and run pytune API and DataBase. Two options are available:
 - using docker-compose
 - using python
 
-## 1.1 - WITH DOCKER-COMPOSE
+## 3.1 - WITH DOCKER-COMPOSE
 This methode use two docker images:
 - alumet/pytune_api:latest
 - alumet/pytune_mysql:latest
 
-You can either build your own docker images using provided Dockerfiles or pull prefab from dockerhub
+You can either build your own docker images using provided 
+Dockerfiles or pull prefab from dockerhub
 
-```bash
-docker-compose up -d
-```
+>### CORE APP
+>
+>#### Build (optional)
+>
+>- pytune_api
+>```bash
+>docker image build . -t alumet/pytune_api:latest
+>```
+>
+>- pytune_bdd
+>
+>  Follow instruction in database_docker/README.md
+>
+>#### RUN
+>```bash
+># run core app (api + bdd)
+>docker-compose up -d
+>```
 
-## 1.2 - WITH PYTHON (3.8 or higher)
+>#### WEB APP
+>#### Build (optional)
+>Follow instruction in webapp/README.md
+>#### RUN
+>```bash
+># run webapp
+>cd webapp
+>docker-compose up -d 
+>```
+
+>#### AIRFLOW
+>Follow instruction in airflow/README.md
+
+## 3.2 - WITH PYTHON (3.8 or higher)
 
 Install requirements:
 ```bash
@@ -62,8 +118,10 @@ File all Environment Variables with:
 uvicorn api:app
 ```
 
-# 2 - Test API
+# 4 - Test API
 For both methods python or docker, open in browser:  http://127.0.0.1:8000
+
+Or test using curl
 ```bash
 curl -X GET -i http://127.0.0.1:8000/
 ```
@@ -113,40 +171,73 @@ Open in browser:  http://127.0.0.1:8000/docs
 }
 ```
 
-## 3 - TRAIN FIRST MODEL
+## 5 - FIRST MODEL
 
-### 3.1 - using python installation
-Step 2.1 required
+This cam be long (up to 15 min) and require at least 
+6Go of RAM
+
+### 5.2 - user pretrained model
+Download model at https://www.dropbox.com/s/z8p5knhkn88884a/model_als.mdl?dl=0
+
+Place file model_als.mdl in **production** folder
+
+
+### 5.2 - using python installation
+Step 3.2 required
 ```bash
 python3 train.py
 ```
 
-### 3.2 - using api
+### 5.3 - using api
 ```bash
 curl -X GET -i http://127.0.0.1:8000/admin/model/train -u "admin:admin"
 ```
-This cam be long (up to 10 min)
 
-### 3.3 - using Airflow
+### 5.4 - using Airflow
 See airflow/Readme.md to set up
 
 
-Once the model trained it should have been saved in then model folder
-```
-project
-│
-└───production
-│   │ model_asl.mdl
-```
+>Once the model trained it should have been saved in then model folder
+>```
+>project
+>│
+>└───production
+>│   │ model_asl.mdl
+>```
 
 
-### 4 - RELOAD NEW MODEL
-Load new mode in API
+### 6 - RELOAD NEW MODEL
+Load new mode in API. Restart API server or use reload end point
 ```bash
 curl -X GET -i http://127.0.0.1:8000/admin/model/reload -u "admin:admin"
 ```
 
 
+### 7 - USE EXAMPLE
 
+Search track title containing "smells"
+```bash
+curl -X POST \
+-i http://127.0.0.1:8000/search?search=smells \
+-u "admin:admin"
+```
+
+Personalised Recommendation (change with user)
+```bash
+curl -X POST \
+-i http://127.0.0.1:8000/recommendation \
+-u "admin:admin" \
+-d '{"N_track": 10,"filter_already_liked": false}'  \
+-H 'Content-Type: application/json'
+```
+
+Add new user
+```bash
+curl -X POST \
+-i http://127.0.0.1:8000/admin/user \
+-u "admin:admin" \
+-d '{"user_name": "aa", "pass_word": "aa", "is_admin": false}' \
+-H 'Content-Type: application/json'
+```
 
 

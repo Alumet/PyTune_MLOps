@@ -2,17 +2,21 @@ from model.model import als_model
 import dotenv
 from utils import data
 
-dotenv.load_dotenv()
-
 
 def train_model():
+    print('Starting')
     model = als_model()
+
+    print('loading data')
     train, test = data.load_data()
+    print('Training model')
     model.train(train, test)
     score = model.score()
+    print('score')
     print(score)
     db = data.DataBase.instance()
     db.save_score(score)
+    print('Saving model')
     model.save()
 
 

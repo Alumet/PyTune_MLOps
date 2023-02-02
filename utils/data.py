@@ -44,7 +44,7 @@ class DataBase:
 
     def search_item(self, txt: str) -> dict:
 
-        request = f"Select * from track where title LIKE '%%{txt}%%' LIMIT 20"
+        request = f'Select * from track where title LIKE "%%{txt}%%" LIMIT 20'
         ans = self._request(request)
 
         df = pd.DataFrame({"track_id": [x[0] for x in ans],
