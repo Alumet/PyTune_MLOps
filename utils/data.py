@@ -15,6 +15,9 @@ from utils.utils import Singleton
 
 @Singleton
 class DataBase:
+    """
+    Singleton class used to connect and manage database
+    """
     def __init__(self):
         self.url = os.getenv("DATA_BASE")
         self.engine = sqlalchemy.create_engine(self.url)
@@ -26,11 +29,21 @@ class DataBase:
             self.char = '?'
 
     def _request(self, request: str) -> list:
+        """
+        Private methode to execute SQL SELECT request
+        :param request: SQL request (str)
+        :return: Return  request result
+        """
         with self.engine.connect() as connection:
             result = connection.execute(f"{request}")
             return result.fetchall()
 
-    def _insert(self, request, values) -> None:
+    def _insert(self, request: str, values: list) -> None:
+        """
+        Private methode to execute SQL INSERT request
+        :param request: SQL request (str)
+        :param values: list of values to insert
+        """
         with self.engine.connect() as connection:
             with connection.begin() as transaction:
                 try:
@@ -43,7 +56,11 @@ class DataBase:
                     transaction.commit()
 
     def search_item(self, txt: str) -> pd.DataFrame:
-
+        """
+        Search for track title containing {txt}
+        :param txt: search string
+        :return: DataFrame of tracks
+        """
         if '"' in txt:
             # Avoid sql injection
             raise BadSearch
@@ -59,6 +76,11 @@ class DataBase:
         return df
 
     def get_user_item(self, date: datetime.date = datetime.datetime.now()):
+        """
+        Get all user_item interaction
+        :param date: max date
+        :return: DataFrame with all user/item interaction
+        """
         request = f'select user_id, track_id from user_item where time_stamp <= "{date}"'
         ans = self._request(request)
 
@@ -70,6 +92,11 @@ class DataBase:
         return df_track
 
     def get_track_info(self, track_list: List[int]) -> pd.DataFrame:
+        """
+        Return track info from track id
+        :param track_list: list of id
+        :return: DataFrame of tracks
+        """
 
         if len(track_list) == 1:
             r = f'({track_list[0]})'
@@ -87,6 +114,11 @@ class DataBase:
         return df
 
     def get_user_info(self, user_name: str) -> dict:
+        """
+        Get User info from username
+        :param user_name: str
+        :return: dict with user info
+        """
         request = f"select * from user where name = '{user_name}' limit 1"
         ans = self._request(request)
 
@@ -103,6 +135,11 @@ class DataBase:
         return user
 
     def save_prediction(self, user_id: int, recommendation: list) -> None:
+        """
+        Save a recommendation for a given user as a string
+        :param user_id: user id
+        :param recommendation: list of track id
+        """
         date = datetime.datetime.now()
         values = []
 
@@ -113,6 +150,11 @@ class DataBase:
         self._insert('INSERT INTO prediction', values)
 
     def save_score(self, score: dict) -> None:
+        """
+        Save model training score
+        :param score: dict of scores
+        :return:
+        """
         date = datetime.datetime.now()
         values = []
         for key in score.keys():
@@ -122,7 +164,11 @@ class DataBase:
         self._insert('INSERT INTO training', values)
 
     def add_event(self, user_id: int, event: Event) -> None:
-
+        """
+        Add a user/item interaction
+        :param user_id: user id (int)
+        :param event: track id
+        """
         if len(self._request(f"Select * from track where id='{event.track_id}'")) != 0:
             request = 'INSERT INTO user_item'
             date = datetime.datetime.now()
@@ -132,6 +178,10 @@ class DataBase:
             raise TrackDoesNotExist
 
     def add_user(self, user: User) -> None:
+        """
+        Add a new user
+        :param user: user info
+        """
 
         id = self._request('Select max(id) from user')[0][0] + 1
 
