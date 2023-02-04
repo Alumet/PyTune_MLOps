@@ -1,8 +1,9 @@
 # Pytune
 
-Pytune is an MLOps project that take place in a Datascientest training.
-The goal is to put into production a music recommender model based on
-the Implicit python library trained on the last.fm 1k dataset (cf documentation/Rapport fil rouge - Datascientest - PyTune.pdf)
+Pytune is an MLOps project that take place in a 
+Datascientest training. The goal is to put into production 
+a music recommender model based on the Implicit python 
+library trained on the last.fm 1k dataset
 
 This project put into action multiple technologies:
 - FastApi (pytune api)
@@ -18,6 +19,14 @@ are available int the documentation root directory.
 
 - Rapport fil rouge - Datascientest - PyTune.pdf
 - Rapport MLOps - Datascientest - PytTune.pdf
+
+```
+project
+│
+└───documentation
+│   │ Rapport fil rouge - Datascientest - PyTune.pdf
+│   │ Rapport MLOps - Datascientest - PytTune.pdf
+```
 
 # 2 - THE PROJECT
 
@@ -45,14 +54,14 @@ Set up and run pytune API and DataBase. Two options are available:
 - using python
 
 ## 3.1 - WITH DOCKER-COMPOSE
-This methode use two docker images:
-- alumet/pytune_api:latest
-- alumet/pytune_mysql:latest
 
 You can either build your own docker images using provided 
 Dockerfiles or pull prefab from dockerhub
 
 >### CORE APP
+>
+> - alumet/pytune_api:latest
+> - alumet/pytune_mysql:latest
 >
 >#### Build (optional)
 >
@@ -64,7 +73,11 @@ Dockerfiles or pull prefab from dockerhub
 >- pytune_bdd
 >
 >  Follow instruction in database_docker/README.md
->
+>```
+> project
+> └───database_docker
+> │   │ README.md
+> ```
 >#### RUN
 >```bash
 ># run core app (api + bdd)
@@ -72,8 +85,20 @@ Dockerfiles or pull prefab from dockerhub
 >```
 
 >#### WEB APP
+> ```
+> project
+> │
+> └───webapp
+> │   │
+> ```
+> - alumet/pytune_webapp:latest
 >#### Build (optional)
 >Follow instruction in webapp/README.md
+> ```
+> project
+> └───webapp
+> │   │ README.md
+> ```
 >#### RUN
 >```bash
 ># run webapp
@@ -83,6 +108,11 @@ Dockerfiles or pull prefab from dockerhub
 
 >#### AIRFLOW
 >Follow instruction in airflow/README.md
+> ```
+> project
+> └───airflow
+> │   │ README.md
+> ```
 
 ## 3.2 - WITH PYTHON (3.8 or higher)
 
@@ -100,6 +130,12 @@ sudo apt install uvicorn
 
 Follow instruction from database_docker/Readme.md
 
+```
+project
+└───database_docker
+│   │ README.md
+```
+
 ### SET UP .env FILE
 
 Create .env file from template
@@ -107,9 +143,9 @@ Create .env file from template
 cp .env_template .env
 ```
 File all Environment Variables with:
-- url to database (mysql)
-- model folders (default production)
-- production model (default als_model.mdl)
+- DATA_BASE: url to database (mysql)
+- MODEL_FOLDER: model folders (default production)
+- PRODUCTION_MODEL: production model (default als_model.mdl)
 
 ## RUN API
 
@@ -179,7 +215,6 @@ This cam be long (up to 15 min) and require at least
 >Once the model trained it should have been saved in then model folder
 >```
 >project
->│
 >└───production
 >│   │ model_asl.mdl
 >```
@@ -193,22 +228,31 @@ Place file model_als.mdl in **production** folder
 ### 5.2 - using python installation
 Step 3.2 required
 ```bash
+# from project folder
 python3 train.py
 ```
 
-### 5.3 - using api
+### 5.3 - using API
 ```bash
-curl -X GET -i http://127.0.0.1:8000/admin/model/train -u "admin:admin"
+curl -X GET \
+-i http://127.0.0.1:8000/admin/model/train \
+-u "admin:admin"
 ```
 
 ### 5.4 - using Airflow
 See airflow/Readme.md to set up
-
+```
+project
+└───airflow
+│   │ README.md
+> ```
 
 ### 6 - RELOAD NEW MODEL
 Load new mode in API. Restart API server or use reload end point
 ```bash
-curl -X GET -i http://127.0.0.1:8000/admin/model/reload -u "admin:admin"
+curl -X GET \
+-i http://127.0.0.1:8000/admin/model/reload \
+-u "admin:admin"
 ```
 
 

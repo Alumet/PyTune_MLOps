@@ -34,6 +34,11 @@ git clone https://github.com/Alumet/pytune.git dags
 
 - Download dataset at: https://www.dropbox.com/s/k0wmnuwn41cilmw/dataset.csv?dl=0
 - Copy <span style="color:orange">dataset.csv</span> file in the <span style="color:orange">data</span> folder (root)
+```
+project
+│ ───data
+│   │ dataset.csv
+```
 ## RUN
 
 Run airflow:
@@ -47,4 +52,7 @@ AirFlow web server will be available on port
 
 - user: airflow
 - password: airflow
+
+## RUN DAGS
+Main dag is named "pytune" 
 

@@ -44,7 +44,8 @@ exit # exit container
 
 ### Populate
 
-- Download .scv dataset at: https://www.dropbox.com/s/k0wmnuwn41cilmw/dataset.csv?dl=0
-
+- Download .csv dataset at: 
+  https://www.dropbox.com/s/k0wmnuwn41cilmw/dataset.csv?dl=0
 - Use DB_create_mysql.ipynb Notebook to populate database
+
 
