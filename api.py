@@ -6,7 +6,7 @@ from utils.schemas import UserRecommendationRequest, UserSimilarRequest, AdminRe
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
-from utils.erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist, BadSearch
+from utils.erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist, BadSearch, ModelNotTrained
 from utils.data import DataBase
 
 dotenv.load_dotenv()
@@ -127,6 +127,12 @@ async def post_recommendations(request: UserRecommendationRequest, user: dict = 
             detail="User need to add listening events and/or model needs to be retrained",
             headers={"WWW-Authenticate": "Basic"},
         )
+    except ModelNotTrained:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Model needs to be trained first to give recommendation",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
     db = DataBase.instance()
     track_df = db.get_track_info(recommendations[0])
@@ -151,6 +157,12 @@ async def post_similar(request: UserSimilarRequest, user: dict = Depends(get_cur
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Unknown track id",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    except ModelNotTrained:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Model needs to be trained first to give recommendation",
             headers={"WWW-Authenticate": "Basic"},
         )
 
