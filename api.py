@@ -6,7 +6,7 @@ from utils.schemas import UserRecommendationRequest, UserSimilarRequest, AdminRe
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
-from utils.erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist
+from utils.erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist, BadSearch
 from utils.data import DataBase
 
 dotenv.load_dotenv()
@@ -94,9 +94,15 @@ async def post_search(search: str, user: dict = Depends(get_current_user)) -> di
     return track with search in title
     :return: List[track_id]
     """
-
-    db = DataBase.instance()
-    track_df = db.search_item(search)
+    try:
+        db = DataBase.instance()
+        track_df = db.search_item(search)
+    except BadSearch:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail='Search not allowed. use of " not allowed',
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
     result = track_id_to_info(track_df)
 

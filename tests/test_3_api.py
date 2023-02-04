@@ -47,6 +47,25 @@ def test_auth(mocker):
 
 
 @pytest.mark.usefixtures("admin_log")
+def test_search(mocker):
+    df = pd.DataFrame({"track_id": [1, 2],
+                       "track_name": ['track_1', 'track_2'],
+                       "artist_id": [0, 0],
+                       "artist_name": ['artist_0', 'artist_0']
+                       })
+
+    mocker.patch.object(DataBase.instance(), 'search_item', return_value=df)
+
+    data = {"search": 'test'}
+    response = client.post('/search',
+                           auth=("admin", "admin"),
+                           params=data)
+
+    assert response.status_code == 200
+    assert type(response.json()) == dict
+
+
+@pytest.mark.usefixtures("admin_log")
 def test_recommendation(mocker):
     df = pd.DataFrame({"track_id": [1, 2],
                        "track_name": ['track_1', 'track_2'],
@@ -131,7 +150,6 @@ def test_reload_model_user(mocker):
 
 @pytest.mark.usefixtures("admin_log")
 def test_train_model_admin(mocker):
-
     mocker.patch('api.train_model', return_value=None)
 
     response = client.get('admin/model/train',
@@ -143,7 +161,6 @@ def test_train_model_admin(mocker):
 
 @pytest.mark.usefixtures("user_log")
 def test_train_model_user(mocker):
-
     mocker.patch('api.train_model', return_value=None)
 
     response = client.get('admin/model/train',

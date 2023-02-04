@@ -133,6 +133,12 @@ def test_search_item(database):
 
 
 @pytest.mark.usefixtures("setup_db")
+def test_search_item_bad(database):
+    with pytest.raises(erros.BadSearch):
+        database.search_item('song"')
+
+
+@pytest.mark.usefixtures("setup_db")
 def test_track_info_single(database):
     track = database.get_track_info([0])
     assert len(track) == 1

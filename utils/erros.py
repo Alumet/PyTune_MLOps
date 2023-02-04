@@ -12,3 +12,7 @@ class UserDoesNotExist(Exception):
 
 class TrackDoesNotExist(Exception):
     pass
+
+
+class BadSearch(Exception):
+    pass

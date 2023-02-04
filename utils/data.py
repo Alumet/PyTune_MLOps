@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 from implicit.nearest_neighbours import bm25_weight
 from implicit import evaluation
 from utils.schemas import User, Event
-from .erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist
+from .erros import UserAlreadyExist, TrackDoesNotExist, UserDoesNotExist, BadSearch
 
 import sqlalchemy
 from utils.utils import Singleton
@@ -42,7 +42,11 @@ class DataBase:
                 else:
                     transaction.commit()
 
-    def search_item(self, txt: str) -> dict:
+    def search_item(self, txt: str) -> pd.DataFrame:
+
+        if '"' in txt:
+            # Avoid sql injection
+            raise BadSearch
 
         request = f'Select * from track where title LIKE "%%{txt}%%" LIMIT 20'
         ans = self._request(request)
