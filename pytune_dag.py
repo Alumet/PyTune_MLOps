@@ -172,6 +172,22 @@ def plot_score_history():
     plt.savefig('/app/data/Pytune_training_score_history.png', dpi=300, pad_inches=0.1, bbox_inches='tight')
 
 
+def recommend_fake_user():
+    os.environ["DATA_BASE"] = "mysql://root:pytune@DB/main"
+
+    model = als_model()
+    model.load('/app/production/new_model_als.mdl')
+
+    for user_id, style in zip([960, 961, 962, 963, 964], ['jazz', 'classic', 'pop', 'rock', 'rap']):
+        reco = model.recommend(user_id)
+
+        db = DataBase.instance()
+        db.save_prediction(user_id, reco)
+
+        df = db.get_track_info(reco[0])
+        df.to_csv(f'/app/data/{user_id}_{style}_{datetime.datetime.now()}.csv')
+
+
 def compare_model(task_instance):
     new = task_instance.xcom_pull(key=f"score_new")
     old = task_instance.xcom_pull(key=f"score_old")
@@ -253,6 +269,12 @@ task_plot_score = PythonOperator(
     dag=my_dag
 )
 
+task_reco_fake_user = PythonOperator(
+    task_id='reco_fake_user',
+    python_callable=recommend_fake_user,
+    dag=my_dag
+)
+
 task_change_model = PythonOperator(
     task_id='change_production_model',
     python_callable=change_model,
@@ -268,6 +290,6 @@ task_load_model = PythonOperator(
 task_ping_test >> task_cut_of
 task_cut_of >> task_load_new
 [task_load_new, task_score_old] >> task_train_new
-task_train_new >> [task_compare, task_plot_score]
-task_compare >> task_change_model
+task_train_new >> [task_compare, task_plot_score, task_reco_fake_user]
+[task_reco_fake_user, task_compare] >> task_change_model
 task_change_model >> task_load_model
