@@ -27,7 +27,7 @@ you can build docker image or use prefab alumet/pytune_webapp:latest
 
 ### build (optional)
 ```bash
-./seup.sh
+./setup.sh
 ```
 
 ### Run docker-compose
