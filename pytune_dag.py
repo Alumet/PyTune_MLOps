@@ -9,6 +9,9 @@ import pandas as pd
 from sqlalchemy import create_engine
 import json
 import requests
+import sqlalchemy
+from matplotlib import pyplot as plt
+import numpy as np
 
 my_dag = DAG(
     dag_id='pytune',
@@ -34,6 +37,23 @@ def test_DB_connection():
         return 0
     else:
         return 1
+
+
+def cut_of_date():
+    try:
+        with open('/app/data/json_data.json', 'r') as file:
+            info = json.load(file)
+
+    except FileNotFoundError:
+        connection_url = "mysql://root:pytune@DB/main"
+        engine = sqlalchemy.create_engine(connection_url)
+
+        with engine.connect() as connection:
+            result = connection.execute("Select MAX(time_stamp) from user_item")
+            date = result.fetchall()[0][0]
+
+            with open('/app/data/json_data.json', 'w') as outfile:
+                json.dump({'last_load': str(date)}, outfile)
 
 
 def score_old_model(task_instance):
@@ -107,6 +127,51 @@ def train_new_model(task_instance):
     print(score)
 
 
+def plot_score_history():
+    connection_url = "mysql://root:pytune@DB/main"
+    engine = sqlalchemy.create_engine(connection_url)
+
+    with engine.connect() as connection:
+        result = connection.execute("Select * from training")
+        ans = result.fetchall()
+
+    dates = [x[0] for x in ans]
+    precision = [x[2] for x in ans]
+    map = [x[3] for x in ans]
+    ndgc = [x[4] for x in ans]
+    auc = [x[5] for x in ans]
+
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, sharex=True, figsize=(12, 10))
+
+    fig.suptitle('Pytune training score history', fontsize=16)
+
+    ax1.grid()
+    ax1.plot(ndgc, 'g-')
+    ax1.set_ylim((0.3, 0.35))
+    ax1.set_ylabel('NDGC', color='g')
+
+    plt.xticks(rotation=90)
+    ax1.set_xticks(np.arange(len(dates)))
+    ax1.set_xticklabels(dates)
+
+    ax2.grid()
+    ax2.plot(auc, 'b-')
+    ax2.set_ylim((0.5, 0.55))
+    ax2.set_ylabel('AUC', color='b')
+
+    ax3.grid()
+    ax3.plot(precision, 'r-')
+    ax3.set_ylim((0.3, 0.35))
+    ax3.set_ylabel('P@k', color='r')
+
+    ax4.grid()
+    ax4.plot(map, 'k-')
+    ax4.set_ylim((0.1, 0.2))
+    ax4.set_ylabel('MAP', color='k')
+
+    plt.savefig('/app/data/Pytune_training_score_history.png', dpi=300, pad_inches=0.1, bbox_inches='tight')
+
+
 def compare_model(task_instance):
     new = task_instance.xcom_pull(key=f"score_new")
     old = task_instance.xcom_pull(key=f"score_old")
@@ -151,6 +216,13 @@ task_ping_test = PythonOperator(
     dag=my_dag
 )
 
+
+task_cut_of = PythonOperator(
+    task_id='cut_of',
+    python_callable=cut_of_date,
+    dag=my_dag
+)
+
 task_score_old = PythonOperator(
     task_id='score_old_model',
     python_callable=score_old_model,
@@ -175,6 +247,12 @@ task_compare = PythonOperator(
     dag=my_dag
 )
 
+task_plot_score = PythonOperator(
+    task_id='plot_score',
+    python_callable=plot_score_history,
+    dag=my_dag
+)
+
 task_change_model = PythonOperator(
     task_id='change_production_model',
     python_callable=change_model,
@@ -187,8 +265,9 @@ task_load_model = PythonOperator(
     dag=my_dag
 )
 
-task_ping_test >> task_load_new
+task_ping_test >> task_cut_of
+task_cut_of >> task_load_new
 [task_load_new, task_score_old] >> task_train_new
-task_train_new >> task_compare
+task_train_new >> [task_compare, task_plot_score]
 task_compare >> task_change_model
 task_change_model >> task_load_model
