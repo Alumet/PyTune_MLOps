@@ -286,6 +286,6 @@ async def post_recommendations_admin(request: AdminRecommendationRequest,
     db = DataBase.instance()
     track_df = db.get_track_info(recommendations[0])
 
-    result = track_id_to_info(recommendations, track_df)
+    result = track_id_to_info(track_df, recommendations)
 
     return result
