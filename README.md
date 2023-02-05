@@ -116,6 +116,13 @@ Dockerfiles or pull prefab from dockerhub
 
 ## 3.2 - WITH PYTHON (3.8 or higher)
 
+Update
+```bash
+atp update
+
+apt install python3-dev default-libmysqlclient-dev build-essential python3-pip
+```
+
 Install requirements:
 ```bash
 pip install -r requirements.txt
@@ -248,7 +255,7 @@ project
 > ```
 
 ### 6 - RELOAD NEW MODEL
-Load new mode in API. Restart API server or use reload end point
+Load new model in API. Restart API server or use reload end point
 ```bash
 curl -X GET \
 -i http://127.0.0.1:8000/admin/model/reload \

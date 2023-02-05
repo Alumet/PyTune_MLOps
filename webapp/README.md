@@ -2,6 +2,13 @@
 
 ## 1 - Python
 
+Update
+```bash
+atp update
+
+apt install python3-dev default-libmysqlclient-dev build-essential python3-pip
+```
+
 install requirements
 ```bash
 pip install -r ../requirements.txt
