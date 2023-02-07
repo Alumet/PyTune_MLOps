@@ -252,7 +252,7 @@ See airflow/Readme.md to set up
 project
 └───airflow
 │   │ README.md
-> ```
+```
 
 ### 6 - RELOAD NEW MODEL
 Load new model in API. Restart API server or use reload end point
